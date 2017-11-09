@@ -1,4 +1,5 @@
 function [f_final,marg_y,Omegainv] =  get_f(ns,a,b,Z,tau,l,nugget,eps)
+    %warning('off','MATLAB:nearlySingularMatrix')
     if(size(Z,1) < size(Z,2))
         error('Z must be a column vector');
     end
@@ -37,7 +38,7 @@ function [f_final,marg_y,Omegainv] =  get_f(ns,a,b,Z,tau,l,nugget,eps)
            f_final = fnew;
        end
        if cntr == cntr_max
-           disp('Maximum number of iterations reached in Newtons method');
+           disp('Maximum number of iterations reached in Newton''s method');
        end
        f = fnew;
        cntr = cntr + 1;
@@ -48,6 +49,16 @@ function [f_final,marg_y,Omegainv] =  get_f(ns,a,b,Z,tau,l,nugget,eps)
         g0val = sum(ns .* f_final) - sum(exp(f_final) .* (a + b)) - ...
             .5* f_final' * (Sigma \ f_final);
         Omegainv = -get_hess(f_final,a,b,Sigmainv);
-        marg_y = -.5*ldet(Omegainv) + g0val - .5 * ldet(Sigma);
+        try
+            det1 = -.5*ldet(Omegainv,'chol');
+        catch
+            det1 = -.5*ldet(Omegainv);
+        end
+        try
+            det2 = -.5*ldet(Sigma,'chol');
+        catch
+            det2 = -.5*ldet(Sigma);
+        end
+        marg_y = det1 + det2 + g0val;
     end
 end

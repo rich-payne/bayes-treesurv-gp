@@ -1,4 +1,5 @@
 function [marg_y,out] = get_marginal(Y,K,s,eps,tau,l,nugget,EB)
+    %warning('off','MATLAB:nearlySingularMatrix')
     max_cntr_EM = 100;
     tol_EM = 1e-9;
     n = size(Y,1);

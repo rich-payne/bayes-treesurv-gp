@@ -152,7 +152,7 @@ function TreePH_MCMCparalleltemp(y,X,varargin)
     end
     
     % Scale y
-    y_orig = y;
+    %y_orig = y;
     y(:,1) = y(:,1)/max(y(:,1));
     K = 20;
     
@@ -210,6 +210,8 @@ function TreePH_MCMCparalleltemp(y,X,varargin)
     spmd(spmdsize)
         % Turn off integration warning
         warning('off','MATLAB:integral:NonFiniteValue');
+        warning('off','MATLAB:illConditionedMatrix');
+        warning('off','MATLAB:singularMatrix');
         if parallelprofile
             mpiprofile on
         end
@@ -218,6 +220,9 @@ function TreePH_MCMCparalleltemp(y,X,varargin)
         end
         % Suppress Matlab error for nearly singular matrix
         oldwarnstate = warning('off','MATLAB:nearlySingularMatrix');
+        
+        %warning on verbose
+        
         myname = labindex;
         master = 1; % master process labindex
         % Create independent Random Streams with a seed on each lab
@@ -425,6 +430,8 @@ function TreePH_MCMCparalleltemp(y,X,varargin)
         end
         % Turn on suppressed warnings
         warning(oldwarnstate);
+        warning('on','MATLAB:illConditionedMatrix');
+        warning('on','MATLAB:singularMatrix');
         if suppress_errors_on_workers
             warning(oldwarnstate0);
             % warning('on','all')

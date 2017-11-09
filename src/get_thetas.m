@@ -4,7 +4,9 @@ function [tau,l] = get_thetas(ns,a,b,Z,tau,l,nugget,eps)
     lb = [0,0];
     ub = [];
     x0 = [tau,l];
+    %warning off;
     out = fmincon(@(x) get_f_opt(ns,a,b,Z,x(1),x(2),nugget,eps),x0,[],[],[],[],lb,ub,[],options);
+    %warning on;
     tau = out(1);
     l = out(2);
 end
