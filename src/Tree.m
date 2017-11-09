@@ -31,16 +31,11 @@ classdef Tree
         Prior % the log of the prior
         Temp % The inverse-temperature of the tree (for parallel tempering)
         Ntermnodes % the number of terminal nodes/leaves       
-        % Parameters
-        a
-        omega
-        % Hyperparameter
-        theta_shape
-        theta_rate
-        a_shape
-        a_rate
         %
-        nbins
+        EB
+        K
+        nugget
+        eps
     end
     methods
         % Constructor
@@ -51,43 +46,28 @@ classdef Tree
         % beta: prior hyperparameter
         % temp: Inverse temperature of the tree
         function out = Tree(y,X,Leafmin,gamma,beta,...
-                a,omega,theta_shape,theta_rate,a_shape,a_rate,nbins,temp)
-            if(~isempty(a))
-                out.a = a;
+                EB,K,nugget,eps,temp)
+            if(~isempty(EB))
+                out.EB = EB;
             else
-                error('Must have nonempty "a"');
+                error('Must have nonempty "EB"');
             end
-            if ~isempty(omega)
-                out.omega = omega;
+            if ~isempty(K)
+                out.K = K;
             else
-                error('Must have nonempty "omega"');
+                error('Must have nonempty "K"');
             end
-            if(~isempty(theta_shape))
-                out.theta_shape = theta_shape;
+            if(~isempty(nugget))
+                out.nugget = nugget;
             else
-                error('Must have nonempty "theta_shape"');
+                error('Must have nonempty "nugget"');
             end
-            if(~isempty(theta_rate))
-                out.theta_rate = theta_rate;
+            if(~isempty(eps))
+                out.eps = eps;
             else
-                error('Must have nonempty "theta_rate"');
+                error('Must have nonempty "eps"');
             end
-            if(~isempty(a_shape))
-                out.a_shape = a_shape;
-            else
-                error('Must have nonempty "a_shape"');
-            end
-            if(~isempty(a_rate))
-                out.a_rate = a_rate;
-            else
-                error('Must have nonempty "a_rate"');
-            end
-            if isempty(nbins)
-                out.nbins = 10;
-            else
-                out.nbins = nbins;
-            end
-            
+           
             % Create root node
             rootnode = Nodes(0,[],[],[],[],1:size(X,1),0);
             out.Allnodes{1} = rootnode;
@@ -1040,9 +1020,6 @@ classdef Tree
                     lprior = lprior + log(1 - obj.gamma/(1 + d)^obj.beta);
                 end                   
             end
-            % Add in prior contribution for gamma process parameter a
-            % NOT NEEDED IN EB FORMULATION
-            % lprior = lprior + log(gampdf(obj.a,obj.a_shape,1/obj.a_rate));
             out.Prior = lprior;
         end
             

@@ -31,8 +31,8 @@ classdef Nodes
         Updatellike % 0 if no llike update/computation needed, 
                        % 1 if it is needed
         Updatesplits % 0 if no update of the splits is necessary, 1 if needed
-        a % the Empirical Bayes estimate for a 
-        theta_max % the Empirical Bayes estimate for theta
+        tau % EB scale hyperparameters 
+        l % EB length hyperparamter
     end
     methods
         % Constructor
@@ -94,7 +94,8 @@ classdef Nodes
                 error('Depth must be numeric')
             end
             
-            obj.a = [];
+            obj.tau = [];
+            obj.l = [];
             % Llike and splits needs to be computed
             obj.Updatellike = 1;
             obj.Updatesplits = 1;
@@ -139,23 +140,27 @@ classdef Nodes
             if ~isempty(pid)
                 pind = nodeind(thetree,pid);
                 pnode = thetree.Allnodes{pind};
-                a_start = pnode.a;
-                theta_start = pnode.theta_max;
+                tau_start = pnode.tau;
+                l_start = pnode.l;
             else
-                a_start = 10;
-                theta_start = 10;
+                tau_start = 10;
+                l_start = .01;
             end
-            [EB_a,EB_theta] = EB_a_theta(ypart,thetree.nbins,a_start,theta_start,...
-                thetree.theta_shape,thetree.theta_rate,0);
-            out.a = EB_a;
-            out.theta_max = EB_theta;
-            % n = size(ypart,1);
-            aa = thetree.theta_shape;
-            bb = thetree.theta_rate;
-            %a = thetree.a;
-            omega = thetree.omega;
-            [theint,C] = mt(ypart,y(:,1),out.a,omega,aa,bb);
-            out.Llike = log(theint) + C;
+            try
+                [marg_y,res] = get_marginal(ypart,thetree.K,[],thetree.eps,...
+                    tau_start,l_start,thetree.nugget,thetree.EB);
+            catch
+                if (tau_start ~= 10) || (l_start ~= .01)
+                    tau_start = 10;
+                    l_start = .01;
+                    [marg_y,res] = get_marginal(ypart,thetree.K,[],thetree.eps,...
+                        tau_start,l_start,thetree.nugget,thetree.EB);
+                end
+            end
+                    
+            out.tau = res.tau;
+            out.l = res.l;
+            out.Llike = marg_y;
         end
         
         % Obtain possible splitting values for a node

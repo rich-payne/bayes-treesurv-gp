@@ -7,7 +7,7 @@ function [f_final,marg_y,Omegainv] =  get_f(ns,a,b,Z,tau,l,nugget,eps)
     fhat = log(ns) - log(a + b);
     ind = isfinite(fhat);
     %sum(ind)
-    f_interp = interp1(Z(ind),fhat(ind),Z(~ind));
+    f_interp = interp1(Z(ind),fhat(ind),Z(~ind),'linear','extrap');
     fhat(~ind) = f_interp;
     
     %Sigma_exp = ;
@@ -17,6 +17,14 @@ function [f_final,marg_y,Omegainv] =  get_f(ns,a,b,Z,tau,l,nugget,eps)
     
     
     f = fhat; % Initial value for Newton's method
+    if(~all(isfinite(fhat)))
+        a
+        b
+        ns
+        fhat
+        error('fhat is not finite');
+    end
+    
     ok = 0;
     cntr = 0;
     cntr_max = 100;
