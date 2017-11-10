@@ -1,6 +1,6 @@
 function out = get_surv(Y,res,ndraw,graph)
     nstar = 100;
-    ystar = linspace(.001,max(Y(:,1)),nstar); % Grid to evaluate the survival function
+    ystar = linspace(.001,max(res.s)-1e-6,nstar); % Grid to evaluate the survival function
     binind = zeros(nstar,1);
     K = length(res.s) - 1;
     for ii=1:nstar
@@ -17,12 +17,17 @@ function out = get_surv(Y,res,ndraw,graph)
             a = ystar(jj) - res.s(binind(jj));
             if binind(jj) > 1
                 thediff = diff(res.s');
-                b = sum(thediff(1:(binind(jj)-1)) .* exp(f(1:(binind(jj)-1))));
+                b = sum( thediff(1:(binind(jj)-1)) .* exp(f(1:(binind(jj)-1))) );
             else
                 b = 0;
             end
             thesurv(jj) = exp( - exp(f(binind(jj)))*a - b );
+            %[a,b,binind(jj)]
+            %f(1:(binind(jj)-1))'
         end
+        %if(any(diff(thesurv) < 0))
+            %thesurv
+        %end
         SURV(ii,:) = thesurv;
     end
     out.surv = SURV;

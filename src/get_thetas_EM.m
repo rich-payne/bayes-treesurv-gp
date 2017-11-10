@@ -11,7 +11,7 @@ function [tau,l] = get_thetas_EM(Y,tau,l,nugget,K,max_cntr,tol)
     while ~ok
        cntr = cntr + 1;
        % Maximize the hyperpamaters 
-       out = fmincon(@(x) opt_EM(f,res.a,res.b,res.Z,x(1),x(2),nugget),[tau,l],[],[],[],[],lb,ub,[],options);
+       out = fmincon(@(x) opt_EM(f,res.Z,x(1),x(2),res.Omegainv,nugget),[tau,l],[],[],[],[],lb,ub,[],options);
        tau_new = out(1);
        l_new = out(2);
        if (abs(tau_new - tau) + abs(l_new - l)) < tol
@@ -29,11 +29,13 @@ function [tau,l] = get_thetas_EM(Y,tau,l,nugget,K,max_cntr,tol)
     warning('off','MATLAB:nearlySingularMatrix')
 end
 
-function out = opt_EM(f,a,b,Z,tau,l,nugget)
-[tau,l]
+function out = opt_EM(f,Z,tau,l,Omegainv,nugget)
+% [tau,l]
     K = length(Z);
     Sigma = tau^2 * exp(-(1/(2*l^2)) * squareform(pdist(Z,'squaredeuclidean')) ) + diag(ones(1,K)*nugget);
     Sigmainv = inv(Sigma);
-    Omega = inv(-get_hess(f,a,b,Sigmainv));
-    out = sum((a + b) .* exp(f + .5*diag(Omega)));
+    %Omegainv = -get_hess(f,a,b,Sigmainv);
+    tmp1 = -.5 * (trace(Omegainv \ Sigmainv) + f' * (Sigma \ f));
+    tmp2 = -.5 * ldet(Sigma,'chol');
+    out = -(tmp1 + tmp2);
 end

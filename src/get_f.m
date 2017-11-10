@@ -8,8 +8,14 @@ function [f_final,marg_y,Omegainv] =  get_f(ns,a,b,Z,tau,l,nugget,eps)
     fhat = log(ns) - log(a + b);
     ind = isfinite(fhat);
     %sum(ind)
-    f_interp = interp1(Z(ind),fhat(ind),Z(~ind),'linear','extrap');
-    fhat(~ind) = f_interp;
+    if ~all(ind)
+        if sum(isfinite(fhat)) < 2
+            fhat = normrnd(0,.01,K,1);
+        else
+            f_interp = interp1(Z(ind),fhat(ind),Z(~ind),'linear','extrap');
+            fhat(~ind) = f_interp;
+        end
+    end
     
     %Sigma_exp = ;
     Sigma = tau^2 * exp(-(1/(2*l^2)) * squareform(pdist(Z,'squaredeuclidean')) ) + diag(ones(1,K)*nugget);
