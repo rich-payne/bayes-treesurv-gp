@@ -54,7 +54,7 @@
 %                             is 0. 
 % filepath: where to place MCMC output. Default is './output/'
 
-function TreePH_MCMCparalleltemp(y,X,varargin)
+function Tree_Surv(y,X,varargin)
     % Parse function
     ip = inputParser;
     ip.FunctionName = 'TreePH_MCMCparalleltemp';
