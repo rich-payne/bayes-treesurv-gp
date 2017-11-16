@@ -8,9 +8,28 @@ function [marg_y,out] = get_marginal(Y,K,s,eps,tau,l,nugget,EB)
     else
         K = length(s) - 1;
     end
+    % An index of which of the K bins each observation falls in
+    binind = zeros(n,1);
+    for ii=1:n
+        %Y(ii,1) < s(2:(K+1))
+        [~,I] = max( Y(ii,1) < s(2:(K+1)) );
+        binind(ii) = I;
+    end
+    
+    % Get rid of empty Ks
+    emptyind = [];
+    for ii=1:K
+        if sum(binind == ii) == 0
+            emptyind = [emptyind ii];
+        end
+    end
+    s(emptyind) = [];
+    
+    K = length(s) - 1;
     Z = (s(1:K) + diff(s)/2)';
     
     % An index of which of the K bins each observation falls in
+    % Recalculated with new s
     binind = zeros(n,1);
     for ii=1:n
         %Y(ii,1) < s(2:(K+1))
