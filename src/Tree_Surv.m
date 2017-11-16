@@ -57,7 +57,7 @@
 function Tree_Surv(y,X,varargin)
     % Parse function
     ip = inputParser;
-    ip.FunctionName = 'TreePH_MCMCparalleltemp';
+    ip.FunctionName = 'Tree_Surv';
     % Required Inputs
     addRequired(ip,'y',@isnumeric);
     addRequired(ip,'X',@istable);
@@ -154,7 +154,8 @@ function Tree_Surv(y,X,varargin)
     % Scale y
     %y_orig = y;
     y(:,1) = y(:,1)/max(y(:,1));
-    K = 20;
+    %K = 20;
+   
     
     % Probability of proposing steps
     p_g_orig = .25; % grow
@@ -232,7 +233,7 @@ function Tree_Surv(y,X,varargin)
         % Initialize root tree on each process
         mytemp = temps(myname);
         T = Tree(y,X,leafmin,gamma,beta,...
-            EB,K,nugget,eps,mytemp);
+            EB,bigK,nugget,eps,mytemp);
         if myname == master
             disp('Starting MCMC...')
         end
