@@ -1,10 +1,17 @@
-function out = get_surv(Y,res,ndraw,graph)
-    nstar = 100;
-    ystar = linspace(.001,max(res.s)-1e-6,nstar); % Grid to evaluate the survival function
+function out = get_surv(Y,res,ndraw,graph,ystar)
+    if isempty(ystar)
+        nstar = 100;
+        ystar = linspace(.001,max(res.s)-1e-6,nstar); % Grid to evaluate the survival function
+    else
+        nstar = length(ystar);
+    end
     binind = zeros(nstar,1);
     K = length(res.s) - 1;
     for ii=1:nstar
         [~,I] = max( ystar(ii) < res.s(2:(K+1)) );
+        if I == 0 % ystar falls beyond the maximum s
+            I = K; % put ystar value in the last bin for extrapolation...
+        end
         binind(ii) = I;
     end
     thesurv = zeros(nstar,1);
@@ -40,8 +47,5 @@ function out = get_surv(Y,res,ndraw,graph)
     out.CI = qtiles;
     if graph
         plot(ystar,pmean,'-k',ystar,qtiles(1,:),'--k',ystar,qtiles(2,:),'--k')
-    end
-    
-    
-    
+    end    
 end

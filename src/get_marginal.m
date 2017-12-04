@@ -4,7 +4,7 @@ function [marg_y,out] = get_marginal(Y,K,s,eps,tau,l,nugget,EB)
     tol_EM = 1e-9;
     n = size(Y,1);
     if(isempty(s))
-        s = linspace(0,max(Y(:,1) + min(.1,max(Y(:,1))/100)),K+1);
+        s = linspace(0,max(Y(:,1)) + min(.1,max(Y(:,1))/100),K+1);
     else
         K = length(s) - 1;
     end

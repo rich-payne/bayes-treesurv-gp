@@ -1,7 +1,19 @@
-function get_surv_tree(thetree,Y,X,ndraw,graph)
+function pdraws = get_surv_tree(thetree,Y,X,ndraw,graph,x0,ystar)
+    if ~isempty(x0)
+        if size(x0,1) > 1
+            error('x0 must have only one row');
+        elseif size(x0,2) ~= size(X,2)
+            error('x0 must have the same number of columns as X');
+        end
+    end
     thetree = fatten_tree(thetree,X);
     I = termnodes(thetree);
-    nnodes = length(I);
+    if isempty(x0)
+        theind = I;
+    else
+        [~,theind] = get_termnode(thetree,x0);
+    end    
+    nnodes = length(theind);
     if nnodes <= 9
         dosubplot = 1;
     else 
@@ -25,20 +37,30 @@ function get_surv_tree(thetree,Y,X,ndraw,graph)
     end
     Ystd = Y;
     Ystd(:,1) = Ystd(:,1)/max(Ystd(:,1));
-    for ii=1:length(I)
-        ypart = Ystd(thetree.Allnodes{I(ii)}.Xind,:);
+    
+    cntr = 1;
+    for ii=theind'
+        ypart = Ystd(thetree.Allnodes{ii}.Xind,:);
         [~,res] = get_marginal(ypart,thetree.K,[],thetree.eps,...
-            thetree.Allnodes{I(ii)}.tau,...
-            thetree.Allnodes{I(ii)}.l,...
+            thetree.Allnodes{ii}.tau,...
+            thetree.Allnodes{ii}.l,...
             thetree.nugget,0);
-        if ~dosubplot
-            figure(ii);
-        else
-            subplot(s1,s2,ii);
+        if graph
+            if ~dosubplot
+                figure(cntr);
+            else
+                subplot(s1,s2,cntr);
+            end
         end
-        get_surv(Ystd,res,ndraw,graph);
-        title(strcat(['Node Index: ',num2str(I(ii))]));
-        xlim([0,1]);
-        ylim([0,1]);
+        pdraws = get_surv(Ystd,res,ndraw,graph,ystar);
+        if graph
+            title(strcat(['Node Index: ',num2str(ii)]));
+            xlim([0,1]);
+            ylim([0,1]);
+        end
+        cntr = cntr + 1;
+    end
+    if isempty(x0)
+        pdraws = [];
     end
 end

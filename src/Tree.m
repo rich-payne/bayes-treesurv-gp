@@ -1053,6 +1053,41 @@ classdef Tree
             end
             out = descendentdata(out,rootID,X);
         end
+        
+        function [thenode,cind] = get_termnode(obj,x)
+            if ~istable(x) 
+                x = array2table(x);
+            end
+            % Find root node
+            for ii=1:length(obj.Allnodes)
+                if isempty(obj.Allnodes{ii}.Parent)
+                    pind = ii;
+                    break;
+                end
+            end
+            thenode = obj.Allnodes{pind};
+            while ~isempty(thenode.Rule)
+                if strcmp(obj.Xclass{thenode.Rule{1}},'double')
+                    if x{:,thenode.Rule{1}} < thenode.Rule{2}
+                        direction = 0; % 0 for left, 1 for right
+                    else
+                        direction = 1;
+                    end
+                else
+                    if ismember(x{:,thenode.Rule{1}},thenode.Rule{2})
+                        direction = 0;
+                    else
+                        direction = 1;
+                    end
+                end
+                if ~direction 
+                    cind = nodeind(obj,thenode.Lchild);
+                else
+                    cind = nodeind(obj,thenode.Rchild);
+                end
+                thenode = obj.Allnodes{cind};
+            end
+        end
 
         % Graphs
         % Function which plots the lines and rules of a tree.  To be used
