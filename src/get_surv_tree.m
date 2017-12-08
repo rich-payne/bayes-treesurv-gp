@@ -35,8 +35,9 @@ function pdraws = get_surv_tree(thetree,Y,X,ndraw,graph,x0,ystar)
         s1 = 3;
         s2 = 3;
     end
+    Ymax = max(Y(:,1));
     Ystd = Y;
-    Ystd(:,1) = Ystd(:,1)/max(Ystd(:,1));
+    Ystd(:,1) = Ystd(:,1)/Ymax;
     
     cntr = 1;
     for ii=theind'
@@ -52,10 +53,10 @@ function pdraws = get_surv_tree(thetree,Y,X,ndraw,graph,x0,ystar)
                 subplot(s1,s2,cntr);
             end
         end
-        pdraws = get_surv(Ystd,res,ndraw,graph,ystar);
+        pdraws = get_surv(Ymax,res,ndraw,graph,ystar);
         if graph
             title(strcat(['Node Index: ',num2str(ii)]));
-            xlim([0,1]);
+            xlim([0,Ymax]);
             ylim([0,1]);
         end
         cntr = cntr + 1;
