@@ -92,7 +92,7 @@ function [Tstar,prop_ratio,r,lr] = proposeTree(T,y,X,allprobs,p,temp,mset)
                 (Tstarprior - Tprior) + ...
                 prop_ratio;
         end
-    elseif r == 3; % change
+    elseif r == 3 % change
         [Tstar,priordraw,startcont,endcont,nchange,nchange2] = change(T,y,X,p);
         [Tstarprior,Tstar] = prior_eval(Tstar,X);
         % Reversibility

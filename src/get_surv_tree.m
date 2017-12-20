@@ -41,6 +41,7 @@ function pdraws = get_surv_tree(thetree,Y,X,ndraw,graph,x0,ystar)
     
     cntr = 1;
     for ii=theind'
+        I(ii)
         ypart = Ystd(thetree.Allnodes{ii}.Xind,:);
         [~,res] = get_marginal(ypart,thetree.K,[],thetree.eps,...
             thetree.Allnodes{ii}.tau,...

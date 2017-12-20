@@ -1074,6 +1074,8 @@ classdef Tree
                         direction = 1;
                     end
                 else
+                    x{:,thenode.Rule{1}}
+                    thenode.Rule{2}
                     if ismember(x{:,thenode.Rule{1}},thenode.Rule{2})
                         direction = 0;
                     else

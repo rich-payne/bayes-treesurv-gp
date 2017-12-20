@@ -73,6 +73,7 @@ function Tree_Surv(y,X,varargin)
     addParameter(ip,'parallelprofile',0);
     addParameter(ip,'hottemp',.1)
     addParameter(ip,'nprint',100);
+    addParameter(ip,'resume',[]);
     addParameter(ip,'saveall',0);
     addParameter(ip,'swapfreq',1);
     addParameter(ip,'seed','shuffle');
@@ -97,6 +98,7 @@ function Tree_Surv(y,X,varargin)
     parallelprofile = ip.Results.parallelprofile;
     hottemp = ip.Results.hottemp;
     nprint = ip.Results.nprint;
+    resume = ip.Results.resume;
     saveall = ip.Results.saveall;
     seed = ip.Results.seed;
     swapfreq = ip.Results.swapfreq;
@@ -179,8 +181,9 @@ function Tree_Surv(y,X,varargin)
     % Posterior trees
     TREES = cell(nmcmc,1);
     treesize = zeros(nmcmc,1);
-    As = zeros(nmcmc,1);
+    %As = zeros(nmcmc,1);
     LLIKE = zeros(nmcmc,1);
+    lprior = zeros(nmcmc,1);
     swapaccepttotal = 0;
     swaptotal = 0;
     swapaccepttotal_global = 0;
@@ -208,6 +211,75 @@ function Tree_Surv(y,X,varargin)
     if spmdsize < 1
         error('Must have at least two processes to do parallel tempering.');
     end
+    
+    
+    if ~isempty(resume)
+        files = dir2(resume);
+        resumeTrees = cell(length(files),1);
+        if spmdsize ~= length(files)
+            error('Number of cores does not match the number of cores from previous run to resume.');
+        end
+        %Sres = cell(length(files),1);
+        %wres = cell(length(files),1);
+        for ii=1:spmdsize
+            try 
+                load(strcat([resume,files(ii).name]));
+            catch
+                error('Cannot load files to resume MCMC. Verify parpool size and number of files match.')
+            end
+            nnn = length(output.llike);
+            tmptree = output.Trees{nnn};
+            tmptree = fatten_tree(tmptree,X);
+            if (tmptree.gamma ~= gamma) || ...
+                (tmptree.beta ~= beta) || ...
+                (tmptree.K ~= bigK) || ...
+                (tmptree.nugget ~= nugget) || ...
+                (tmptree.eps ~= eps) || ...
+                (tmptree.Leafmin ~= leafmin) || ...
+                (tmptree.EB ~= EB)
+               warning('The following parameters have changed from the last run:'); 
+               if tmptree.gamma ~= gamma
+                   warning(strcat(['  gamma changed from ',num2str(tmptree.gamma),' to ',num2str(gamma)]));
+               end
+               if tmptree.beta ~= beta
+                   warning(strcat(['  beta changed from ',num2str(tmptree.beta),' to ',num2str(beta)]));
+               end
+               if tmptree.K ~= bigK
+                   warning(strcat(['  K changed from ',num2str(tmptree.K),' to ',num2str(bigK)]));
+               end
+               if tmptree.nugget ~= nugget
+                   warning(strcat(['  nugget changed from ',num2str(tmptree.nugget),' to ',num2str(nugget)]));
+               end
+               if tmptree.eps ~= eps
+                   warning(strcat(['  eps changed from ',num2str(tmptree.eps),' to ',num2str(eps)]));
+               end
+               if tmptree.Leafmin ~= leafmin
+                   warning(strcat(['  leafmin changed from ',num2str(tmptree.Leafmin),' to ',num2str(leafmin)]));
+               end
+               if tmptree.EB ~= EB
+                   warning(strcat(['  EB changed from ',num2str(tmptree.EB),' to ',num2str(EB)]));
+               end
+            end
+            tmptree.gamma = gamma;
+            tmptree.beta = beta;
+            tmptree.K = bigK;
+            tmptree.nugget = nugget;
+            tmptree.eps = eps;
+            tmptree.Leafmin = leafmin;
+            tmptree.EB = EB;
+            % Update log-likelihood and prior
+            [~,tmptree] = prior_eval(tmptree,X); % Also updates splits (lost in pruning)
+            tmptree = llike_termnodes(tmptree,y);
+            resumeTrees{ii} = tmptree;
+            
+            %Sres{ii} = output.Spost{nnn};
+            %wres{ii} = output.W(nnn,:)';
+        end
+        clear output;
+    end
+    
+    
+    
     spmd(spmdsize)
         % Turn off integration warning
         warning('off','MATLAB:integral:NonFiniteValue');
@@ -232,8 +304,13 @@ function Tree_Surv(y,X,varargin)
         RandStream.setGlobalStream(s);
         % Initialize root tree on each process
         mytemp = temps(myname);
-        T = Tree(y,X,leafmin,gamma,beta,...
-            EB,bigK,nugget,eps,mytemp);
+        if isempty(resume)        
+            T = Tree(y,X,leafmin,gamma,beta,...
+                EB,bigK,nugget,eps,mytemp);
+        else
+            T = resumeTrees{myname};
+            T.Temp = mytemp;
+        end
         if myname == master
             disp('Starting MCMC...')
         end
@@ -381,6 +458,7 @@ function Tree_Surv(y,X,varargin)
                 TREES{ii - burn} = thin_tree(T);
                 treesize(ii - burn) = T.Ntermnodes;
                 LLIKE(ii - burn) = T.Lliketree;
+                lprior(ii - burn) = T.Prior;
             end
             
         end
@@ -412,6 +490,7 @@ function Tree_Surv(y,X,varargin)
             TREES = Treesub;
         end
         output = struct('Trees',{TREES},'llike',LLIKE,...
+            'lprior',lprior,...
             'acceptance',perc_accept,...
             'treesize',treesize,'move_accepts',move_accepts,...
             'swap_accept',swap_accept,'a_accept',a_accept);
