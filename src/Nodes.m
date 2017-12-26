@@ -33,6 +33,7 @@ classdef Nodes
         Updatesplits % 0 if no update of the splits is necessary, 1 if needed
         tau % EB scale hyperparameters 
         l % EB length hyperparamter
+        mu
     end
     methods
         % Constructor
@@ -96,6 +97,7 @@ classdef Nodes
             
             obj.tau = [];
             obj.l = [];
+            obj.mu = [];
             % Llike and splits needs to be computed
             obj.Updatellike = 1;
             obj.Updatesplits = 1;
@@ -142,22 +144,25 @@ classdef Nodes
                 pnode = thetree.Allnodes{pind};
                 tau_start = pnode.tau;
                 l_start = pnode.l;
+                mu_start = pnode.mu;
             else
                 tau_start = 10;
                 l_start = .01;
+                mu_start = 0;
             end
             try
                 [marg_y,res] = get_marginal(ypart,thetree.K,[],thetree.eps,...
-                    tau_start,l_start,thetree.nugget,thetree.EB);
+                    tau_start,l_start,mu_start,thetree.nugget,thetree.EB);
             catch
-                if (tau_start ~= 10) || (l_start ~= .01)
+                if (tau_start ~= 10) || (l_start ~= .01) || (mu_start ~= 0)
                     tau_start = 10;
                     l_start = .01;
+                    mu_start = 0;
                     [marg_y,res] = get_marginal(ypart,thetree.K,[],thetree.eps,...
-                        tau_start,l_start,thetree.nugget,thetree.EB);
+                        tau_start,l_start,mu_start,thetree.nugget,thetree.EB);
                 end
             end
-                    
+            out.mu = res.mu;
             out.tau = res.tau;
             out.l = res.l;
             out.Llike = marg_y;

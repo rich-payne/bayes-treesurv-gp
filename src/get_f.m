@@ -1,4 +1,4 @@
-function [f_final,marg_y,Omegainv] =  get_f(ns,a,b,Z,tau,l,nugget,eps)
+function [f_final,marg_y,Omegainv] =  get_f(ns,a,b,mu,Z,tau,l,nugget,eps)
     %warning('off','MATLAB:nearlySingularMatrix')
     if(size(Z,1) < size(Z,2))
         error('Z must be a column vector');
@@ -37,7 +37,7 @@ function [f_final,marg_y,Omegainv] =  get_f(ns,a,b,Z,tau,l,nugget,eps)
     cntr_max = 100;
     while(~ok)
        thehess = get_hess(f,a,b,Sigmainv);
-       thegrad = get_grad(f,a,b,Sigmainv,ns);
+       thegrad = get_grad(f,a,b,mu,Sigmainv,ns);
        fnew = f - thehess \ thegrad;
        if (sum(abs(fnew - f)) < eps) || (cntr == cntr_max)
            ok = 1;

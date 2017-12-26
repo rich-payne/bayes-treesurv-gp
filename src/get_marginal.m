@@ -1,4 +1,4 @@
-function [marg_y,out] = get_marginal(Y,K,s,eps,tau,l,nugget,EB)
+function [marg_y,out] = get_marginal(Y,K,s,eps,tau,l,mu,nugget,EB)
     %warning('off','MATLAB:nearlySingularMatrix')
     max_cntr_EM = 100;
     tol_EM = 1e-9;
@@ -17,15 +17,14 @@ function [marg_y,out] = get_marginal(Y,K,s,eps,tau,l,nugget,EB)
     end
     
     % Get rid of empty Ks
-    emptyind = [];
-    for ii=1:K
-        if sum(binind == ii) == 0
-            emptyind = [emptyind ii];
-        end
-    end
-    s(emptyind) = [];
-    
-    K = length(s) - 1;
+    % emptyind = [];
+    %for ii=1:K
+    %    if sum(binind == ii) == 0
+    %        emptyind = [emptyind ii];
+    %    end
+    %end
+    %s(emptyind) = [];
+    % K = length(s) - 1;
     Z = (s(1:K) + diff(s)/2)';
     
     % An index of which of the K bins each observation falls in
@@ -57,7 +56,7 @@ function [marg_y,out] = get_marginal(Y,K,s,eps,tau,l,nugget,EB)
             
     % Here's where EB happens...
     if EB == 1
-        [tau,l] = get_thetas(ns,a,b,Z,tau,l,nugget,eps);
+        [tau,l,mu] = get_thetas(ns,a,b,mu,Z,tau,l,nugget,eps);
     elseif EB  == 2
         [tau,l] = get_thetas_EM(Y,tau,l,nugget,K,max_cntr_EM,tol_EM);
     end
@@ -65,7 +64,7 @@ function [marg_y,out] = get_marginal(Y,K,s,eps,tau,l,nugget,EB)
     %if justf
     %    f = get_f(ns,a,b,Z,tau,l,eps);
     %else
-    [f,marg_y,Omegainv] = get_f(ns,a,b,Z,tau,l,nugget,eps);
+    [f,marg_y,Omegainv] = get_f(ns,a,b,mu,Z,tau,l,nugget,eps);
     %end
     
     if nargout > 1
@@ -73,6 +72,7 @@ function [marg_y,out] = get_marginal(Y,K,s,eps,tau,l,nugget,EB)
         out.marg_y = marg_y;
         out.tau = tau;
         out.l = l;
+        out.mu = mu;
         out.Omegainv = Omegainv;
         out.s = s;
         out.a = a;
