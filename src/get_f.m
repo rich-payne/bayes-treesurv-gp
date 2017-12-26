@@ -53,7 +53,7 @@ function [f_final,marg_y,Omegainv] =  get_f(ns,a,b,mu,Z,tau,l,nugget,eps)
         return;
     else
         g0val = sum(ns .* f_final) - sum(exp(f_final) .* (a + b)) - ...
-            .5* f_final' * (Sigma \ f_final);
+            .5* (f_final - mu)' * (Sigma \ (f_final - mu));
         Omegainv = -get_hess(f_final,a,b,Sigmainv);
         try
             det1 = -.5*ldet(Omegainv,'chol');
