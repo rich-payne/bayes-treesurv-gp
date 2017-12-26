@@ -14,9 +14,14 @@ end
 
 function neg_marg_y = get_f_opt(ns,a,b,mu,Z,tau,l,nugget,eps)
     [~,marg_y] = get_f(ns,a,b,mu,Z,tau,l,nugget,eps);
-    lprior = log(exppdf(1/tau^2,1)) + ... %encourages large taus
-             log(exppdf(l^2,1)); % encourages small l (more flexible survival functions)   
-    %lprior = log(tpdf(tau/sqrt(10),1)) + ...   
-%         log(tpdf(l,1)); % enocourages small l
+    %lprior = log(exppdf(1/tau^2,1)) + ... %encourages large taus
+    %         log(exppdf(l^2,1)); % encourages small l (more flexible survival functions)   
+    lprior = log(tpdf(tau/sqrt(10),1)) + ...   
+         log(tpdf(l,1)) + ...
+         log(normpdf(mu,0,10)); % enocourages small l
+    %lprior = log(tpdf(tau ./ sqrt(10),1)) + ... %encourages large taus
+    %  log(tpdf(l,1)); % encourages small l (more flexible survival functions)   
+
+
     neg_marg_y = -(marg_y + lprior);
 end
