@@ -54,7 +54,7 @@ function pdraws = get_surv_tree(thetree,Y,X,ndraw,graph,x0,ystar)
                 subplot(s1,s2,cntr);
             end
         end
-        pdraws = get_surv(Ymax,res,ndraw,graph,ystar);
+        pdraws = get_surv(Y,res,ndraw,graph,ystar);
         if graph
             title(strcat(['Node Index: ',num2str(ii)]));
             xlim([0,Ymax]);

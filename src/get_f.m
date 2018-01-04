@@ -65,6 +65,9 @@ function [f_final,marg_y,Omegainv] =  get_f(ns,a,b,mu,Z,tau,l,nugget,eps)
         catch
             det2 = -.5*ldet(Sigma);
         end
+        %isreal(det1)
+        %isreal(det2)
+        %isreal(g0val)
         marg_y = det1 + det2 + g0val;
     end
 end

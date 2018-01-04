@@ -66,6 +66,9 @@ function [marg_y,out] = get_marginal(Y,K,s,eps,tau,l,mu,nugget,EB)
     %else
     [f,marg_y,Omegainv] = get_f(ns,a,b,mu,Z,tau,l,nugget,eps);
     %end
+    if ~isreal(marg_y) % Avoid complex numbers
+        marg_y = -Inf;
+    end
     
     if nargout > 1
         out.f = f;
@@ -77,6 +80,9 @@ function [marg_y,out] = get_marginal(Y,K,s,eps,tau,l,mu,nugget,EB)
         out.s = s;
         out.a = a;
         out.b = b;
+        out.ns = ns;
+        out.ms = ms;
+        out.binind = binind;
         out.Z = Z;
     end
 end

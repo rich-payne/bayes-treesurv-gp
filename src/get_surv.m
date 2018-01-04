@@ -1,4 +1,5 @@
-function out = get_surv(Ymax,res,ndraw,graph,ystar)
+function out = get_surv(Y_orig,res,ndraw,graph,ystar)
+    Ymax = max(Y_orig(:,1));
     if isempty(ystar)
         nstar = 100;
         ystar = linspace(.001,max(res.s)-1e-6,nstar); % Grid to evaluate the survival function
@@ -47,5 +48,16 @@ function out = get_surv(Ymax,res,ndraw,graph,ystar)
     out.CI = qtiles;
     if graph
         plot(ystar*Ymax,pmean,'-k',ystar*Ymax,qtiles(1,:),'--k',ystar*Ymax,qtiles(2,:),'--k')
-    end    
+        graphpoints = 0;
+        if graphpoints
+            survpoints = interp1(ystar*Ymax,pmean,Y_orig);
+            hold on;
+                ind = Y_orig(:,2) == 1;
+                Ysub = Y_orig(ind,1);
+                plot(Ysub,survpoints(ind),'bo');
+                Ysub = Y_orig(~ind,1);
+                plot(Ysub,survpoints(~ind),'rx');
+            hold off
+        end
+    end   
 end
