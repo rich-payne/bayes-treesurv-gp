@@ -58,12 +58,16 @@ function [f_final,marg_y,Omegainv] =  get_f(ns,a,b,mu,Z,tau,l,nugget,eps)
         try
             det1 = -.5*ldet(Omegainv,'chol');
         catch
-            det1 = -.5*ldet(Omegainv);
+            % det1 = -.5*ldet(Omegainv);
+            marg_y = -Inf;
+            return;
         end
         try
             det2 = -.5*ldet(Sigma,'chol');
         catch
-            det2 = -.5*ldet(Sigma);
+            %det2 = -.5*ldet(Sigma);
+            marg_y = -Inf;
+            return;
         end
         %isreal(det1)
         %isreal(det2)
