@@ -84,5 +84,6 @@ function [marg_y,out] = get_marginal(Y,K,s,eps,tau,l,mu,nugget,EB)
         out.ms = ms;
         out.binind = binind;
         out.Z = Z;
+        out.lprior = get_lprior(tau,l,mu); % prior on hyperparmeters...
     end
 end
