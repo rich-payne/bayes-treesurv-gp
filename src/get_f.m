@@ -18,7 +18,7 @@ function [f_final,marg_y,Omegainv] =  get_f(ns,a,b,mu,Z,tau,l,nugget,eps)
     end
     
     %Sigma_exp = ;
-    Sigma = tau^2 * exp(-(1/(2*l^2)) * squareform(pdist(Z,'squaredeuclidean')) ) + diag(ones(1,K)*nugget);
+    Sigma = get_sigma(Z,tau,l,sqrt(nugget));
     %Sigmainv = 1/(tau^2) * inv(Sigma_exp);
     Sigmainv = inv(Sigma);
     
