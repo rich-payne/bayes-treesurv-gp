@@ -1,4 +1,4 @@
-function [f_final,marg_y,Omegainv] =  get_f(ns,a,b,mu,Z,tau,l,nugget,eps)
+function [f_final,marg_y,Omegainv] =  get_f(ns,a,b,Z,tau,l,nugget,eps)
     %warning('off','MATLAB:nearlySingularMatrix')
     if(size(Z,1) < size(Z,2))
         error('Z must be a column vector');
@@ -35,9 +35,11 @@ function [f_final,marg_y,Omegainv] =  get_f(ns,a,b,mu,Z,tau,l,nugget,eps)
     ok = 0;
     cntr = 0;
     cntr_max = 100;
+    [lprior,sigma2_mu] = get_lprior(tau,l);
+    Astar = sum(sum(Sigmainv)) + 1 / sigma2_mu;
     while(~ok)
-       thehess = get_hess(f,a,b,Sigmainv);
-       thegrad = get_grad(f,a,b,mu,Sigmainv,ns);
+       thehess = get_hess(f,a,b,Astar,Sigmainv);
+       thegrad = get_grad(f,a,b,Astar,Sigmainv,ns);
        fnew = f - thehess \ thegrad;
        if (sum(abs(fnew - f)) < eps) || (cntr == cntr_max)
            ok = 1;
@@ -52,9 +54,11 @@ function [f_final,marg_y,Omegainv] =  get_f(ns,a,b,mu,Z,tau,l,nugget,eps)
     if nargout == 1
         return;
     else
+        Sigmainv_f = Sigma \ f_final;
         g0val = sum(ns .* f_final) - sum(exp(f_final) .* (a + b)) - ...
-            .5* (f_final - mu)' * (Sigma \ (f_final - mu));
-        Omegainv = -get_hess(f_final,a,b,Sigmainv);
+            .5* f_final' * Sigmainv_f + ...
+            .5 * (sum(Sigmainv_f).^2) ./ Astar;
+        Omegainv = -get_hess(f_final,a,b,Astar,Sigmainv);
         try
             det1 = -.5*ldet(Omegainv,'chol');
         catch
@@ -72,7 +76,7 @@ function [f_final,marg_y,Omegainv] =  get_f(ns,a,b,mu,Z,tau,l,nugget,eps)
         %isreal(det1)
         %isreal(det2)
         %isreal(g0val)
-        lprior = get_lprior(tau,l,mu);
-        marg_y = det1 + det2 + g0val + lprior;
+        %lprior = get_lprior(tau,l,mu);
+        marg_y = det1 + det2 + g0val + lprior - .5*log(Astar);
     end
 end

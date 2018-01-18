@@ -1,4 +1,7 @@
-function pdraws = get_surv_tree(thetree,Y,X,ndraw,graph,x0,ystar)
+function pdraws = get_surv_tree(thetree,Y,X,ndraw,graph,x0,ystar,alpha)
+    if ~exist('alpha','var')
+        alpha = .05;
+    end
     if ~isempty(x0)
         if size(x0,1) > 1
             error('x0 must have only one row');
@@ -45,7 +48,6 @@ function pdraws = get_surv_tree(thetree,Y,X,ndraw,graph,x0,ystar)
         [~,res] = get_marginal(ypart,thetree.K,[],thetree.eps,...
             thetree.Allnodes{ii}.tau,...
             thetree.Allnodes{ii}.l,...
-            thetree.Allnodes{ii}.mu,...
             thetree.nugget,0);
         if graph
             if ~dosubplot
@@ -54,7 +56,7 @@ function pdraws = get_surv_tree(thetree,Y,X,ndraw,graph,x0,ystar)
                 subplot(s1,s2,cntr);
             end
         end
-        pdraws = get_surv(Y,res,ndraw,graph,ystar);
+        pdraws = get_surv(Y,res,ndraw,graph,ystar,alpha);
         if graph
             title(strcat(['Node Index: ',num2str(ii)]));
             xlim([0,Ymax]);

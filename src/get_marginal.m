@@ -1,4 +1,4 @@
-function [marg_y,out] = get_marginal(Y,K,s,eps,tau,l,mu,nugget,EB)
+function [marg_y,out] = get_marginal(Y,K,s,eps,tau,l,nugget,EB)
     %warning('off','MATLAB:nearlySingularMatrix')
     max_cntr_EM = 100;
     tol_EM = 1e-9;
@@ -56,7 +56,7 @@ function [marg_y,out] = get_marginal(Y,K,s,eps,tau,l,mu,nugget,EB)
             
     % Here's where EB happens...
     if EB == 1
-        [tau,l,mu] = get_thetas(ns,a,b,mu,Z,tau,l,nugget,eps);
+        [tau,l] = get_thetas(ns,a,b,Z,tau,l,nugget,eps);
     elseif EB  == 2
         [tau,l] = get_thetas_EM(Y,tau,l,nugget,K,max_cntr_EM,tol_EM);
     end
@@ -64,7 +64,7 @@ function [marg_y,out] = get_marginal(Y,K,s,eps,tau,l,mu,nugget,EB)
     %if justf
     %    f = get_f(ns,a,b,Z,tau,l,eps);
     %else
-    [f,marg_y,Omegainv] = get_f(ns,a,b,mu,Z,tau,l,nugget,eps);
+    [f,marg_y,Omegainv] = get_f(ns,a,b,Z,tau,l,nugget,eps);
     %end
     if ~isreal(marg_y) % Avoid complex numbers
         marg_y = -Inf;
@@ -75,7 +75,7 @@ function [marg_y,out] = get_marginal(Y,K,s,eps,tau,l,mu,nugget,EB)
         out.marg_y = marg_y;
         out.tau = tau;
         out.l = l;
-        out.mu = mu;
+        % out.mu = mu;
         out.Omegainv = Omegainv;
         out.s = s;
         out.a = a;
@@ -84,6 +84,6 @@ function [marg_y,out] = get_marginal(Y,K,s,eps,tau,l,mu,nugget,EB)
         out.ms = ms;
         out.binind = binind;
         out.Z = Z;
-        out.lprior = get_lprior(tau,l,mu); % prior on hyperparmeters...
+        out.lprior = get_lprior(tau,l); % prior on hyperparmeters...
     end
 end

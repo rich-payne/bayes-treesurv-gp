@@ -1,4 +1,4 @@
-function out = get_surv(Y_orig,res,ndraw,graph,ystar)
+function out = get_surv(Y_orig,res,ndraw,graph,ystar,alpha)
     Ymax = max(Y_orig(:,1));
     if isempty(ystar)
         nstar = 100;
@@ -42,7 +42,7 @@ function out = get_surv(Y_orig,res,ndraw,graph,ystar)
     out.ystar = ystar;
     
     pmean = mean(SURV);
-    qtiles = quantile(SURV,[.025,.975],1);
+    qtiles = quantile(SURV,[alpha/2,1-alpha/2],1);
 
     out.pmean = pmean;
     out.CI = qtiles;
