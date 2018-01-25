@@ -4,7 +4,7 @@ function [f_final,marg_y,Omegainv] =  get_f(ns,a,b,Z,tau,l,nugget,eps)
         error('Z must be a column vector');
     end
     K = length(Z);
-    % Get ML estimmmmate to start newton's algorithm
+    % Get ML estimate to start newton's algorithm
     fhat = log(ns) - log(a + b);
     ind = isfinite(fhat);
     %sum(ind)
