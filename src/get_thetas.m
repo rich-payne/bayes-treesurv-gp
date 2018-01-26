@@ -20,8 +20,9 @@ function neg_marg_y = get_f_opt(ns,a,b,Z,tau,l,nugget,eps)
 %          log(normpdf(mu,0,10)); % enocourages small l
     %lprior = log(tpdf(tau ./ sqrt(10),1)) + ... %encourages large taus
     %  log(tpdf(l,1)); % encourages small l (more flexible survival functions)   
-    lprior = get_lprior(tau,l);
-    neg_marg_y = -(marg_y + lprior);
+    % lprior = get_lprior(tau,l);
+    % neg_marg_y = -(marg_y + lprior);
+    neg_marg_y = -marg_y;
 end
 
 
