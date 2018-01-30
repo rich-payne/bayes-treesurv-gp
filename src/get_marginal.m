@@ -1,10 +1,13 @@
 function [marg_y,out] = get_marginal(Y,K,s,eps,tau,l,nugget,EB)
+    % Assumes Y has been scaled on the interval (0,1].
+    %   but doesn't throw an error at the moment.
     %warning('off','MATLAB:nearlySingularMatrix')
     max_cntr_EM = 100;
     tol_EM = 1e-9;
     n = size(Y,1);
     if(isempty(s))
-        s = linspace(0,max(Y(:,1)) + min(.1,max(Y(:,1))/100),K+1);
+        %s = linspace(0,max(Y(:,1)) + min(.1,max(Y(:,1))/100),K+1);
+        s = linspace(0,1.01,K+1);
     else
         K = length(s) - 1;
     end
@@ -15,6 +18,12 @@ function [marg_y,out] = get_marginal(Y,K,s,eps,tau,l,nugget,EB)
         [~,I] = max( Y(ii,1) < s(2:(K+1)) );
         binind(ii) = I;
     end
+    
+    % get rid of Ks above the largest one
+    maxbin = max(binind);
+    % reassign s & K
+    s = s(1:(maxbin+1));
+    K = maxbin;
     
     % Get rid of empty Ks
     % emptyind = [];

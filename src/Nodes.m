@@ -137,21 +137,27 @@ classdef Nodes
             ypart = y(obj.Xind,:);
             % use parent values of a and theta as starting points
             pid = obj.Parent;
-            if ~isempty(pid)
+            % Randomly choose to use parent values or default
+            whichstarts = rand;
+            
+            if ~isempty(pid) && (whichstarts < .5)
                 pind = nodeind(thetree,pid);
                 pnode = thetree.Allnodes{pind};
                 tau_start = pnode.tau;
                 l_start = pnode.l;
-            else
-                tau_start = 10;
+            elseif whichstarts < .75
+                tau_start = 1;
                 l_start = .01;
+            else % semi-random start points
+                tau_start = rand*10;
+                l_start = rand*2;
             end
             try
                 [marg_y,res] = get_marginal(ypart,thetree.K,[],thetree.eps,...
                     tau_start,l_start,thetree.nugget,thetree.EB);
             catch
-                if (tau_start ~= 10) || (l_start ~= .01) 
-                    tau_start = 10;
+                if (tau_start ~= 1) || (l_start ~= .01) 
+                    tau_start = 1;
                     l_start = .01;
                     [marg_y,res] = get_marginal(ypart,thetree.K,[],thetree.eps,...
                         tau_start,l_start,thetree.nugget,thetree.EB);

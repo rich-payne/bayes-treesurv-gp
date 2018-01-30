@@ -46,7 +46,7 @@ function [f_final,marg_y,Omegainv] =  get_f(ns,a,b,Z,tau,l,nugget,eps)
            f_final = fnew;
        end
        if cntr == cntr_max
-           disp('Maximum number of iterations reached in Newton''s method');
+           % disp('Maximum number of iterations reached in Newton''s method');
        end
        f = fnew;
        cntr = cntr + 1;

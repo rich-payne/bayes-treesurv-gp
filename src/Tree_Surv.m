@@ -68,7 +68,7 @@ function Tree_Surv(y,X,varargin)
     addParameter(ip,'gamma',.95)
     addParameter(ip,'beta',1)
     addParameter(ip,'k',0)
-    addParameter(ip,'bigK',20);
+    addParameter(ip,'bigK',100);
     addParameter(ip,'p',.75)
     addParameter(ip,'parallelprofile',0);
     addParameter(ip,'hottemp',.1)
