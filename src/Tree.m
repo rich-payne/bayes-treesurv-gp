@@ -1066,26 +1066,30 @@ classdef Tree
                 end
             end
             thenode = obj.Allnodes{pind};
-            while ~isempty(thenode.Rule)
-                if strcmp(obj.Xclass{thenode.Rule{1}},'double')
-                    if x{:,thenode.Rule{1}} < thenode.Rule{2}
-                        direction = 0; % 0 for left, 1 for right
+            if length(obj.Allnodes) > 1 % If more than root node
+                while ~isempty(thenode.Rule)
+                    if strcmp(obj.Xclass{thenode.Rule{1}},'double')
+                        if x{:,thenode.Rule{1}} < thenode.Rule{2}
+                            direction = 0; % 0 for left, 1 for right
+                        else
+                            direction = 1;
+                        end
                     else
-                        direction = 1;
+                        if ismember(x{:,thenode.Rule{1}},thenode.Rule{2})
+                            direction = 0;
+                        else
+                            direction = 1;
+                        end
                     end
-                else
-                    if ismember(x{:,thenode.Rule{1}},thenode.Rule{2})
-                        direction = 0;
+                    if ~direction 
+                        cind = nodeind(obj,thenode.Lchild);
                     else
-                        direction = 1;
+                        cind = nodeind(obj,thenode.Rchild);
                     end
+                    thenode = obj.Allnodes{cind};
                 end
-                if ~direction 
-                    cind = nodeind(obj,thenode.Lchild);
-                else
-                    cind = nodeind(obj,thenode.Rchild);
-                end
-                thenode = obj.Allnodes{cind};
+            else
+                cind = 1;
             end
         end
 
