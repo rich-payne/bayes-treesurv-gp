@@ -35,11 +35,13 @@ function [f_final,marg_y,Omegainv] =  get_f(ns,a,b,Z,tau,l,nugget,eps)
     ok = 0;
     cntr = 0;
     cntr_max = 100;
-    [lprior,sigma2_mu] = get_lprior(tau,l);
+    [~,sigma2_mu] = get_lprior(tau,l);
     Astar = sum(sum(Sigmainv)) + 1 / sigma2_mu;
+    hessval = 1./Astar .* (sum(Sigmainv,2) * sum(Sigmainv,1)); % quantity needed for Hessian
+    gradval = 1./Astar .* sum(Sigmainv,2); % Quantity needed for gradient
     while(~ok)
-       thehess = get_hess(f,a,b,Astar,Sigmainv);
-       thegrad = get_grad(f,a,b,Astar,Sigmainv,ns);
+       thehess = get_hess(f,a,b,Sigmainv,hessval);
+       thegrad = get_grad(f,a,b,Sigmainv,ns,gradval);
        fnew = f - thehess \ thegrad;
        if (sum(abs(fnew - f)) < eps) || (cntr == cntr_max)
            ok = 1;
@@ -58,7 +60,7 @@ function [f_final,marg_y,Omegainv] =  get_f(ns,a,b,Z,tau,l,nugget,eps)
         g0val = sum(ns .* f_final) - sum(exp(f_final) .* (a + b)) - ...
             .5* f_final' * Sigmainv_f + ...
             .5 * (sum(Sigmainv_f).^2) ./ Astar;
-        Omegainv = -get_hess(f_final,a,b,Astar,Sigmainv);
+        Omegainv = -get_hess(f_final,a,b,Sigmainv,hessval);
         try
             det1 = -.5*ldet(Omegainv,'chol');
         catch
@@ -77,6 +79,7 @@ function [f_final,marg_y,Omegainv] =  get_f(ns,a,b,Z,tau,l,nugget,eps)
         %isreal(det2)
         %isreal(g0val)
         %lprior = get_lprior(tau,l,mu);
-        marg_y = det1 + det2 + g0val + lprior - .5*log(Astar);
+        % marg_y = det1 + det2 + g0val + lprior - .5*log(Astar);
+        marg_y = det1 + det2 + g0val - .5*log(Astar);
     end
 end

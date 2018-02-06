@@ -1,4 +1,5 @@
-function out = get_grad(f,a,b,Astar,Sigmainv,ns)
-    val = 1/Astar .* sum(Sigmainv,2) .* sum(Sigmainv * f) ;   
-    out = ns - exp(f) .* (a + b) - Sigmainv * f + val;
+function out = get_grad(f,a,b,Sigmainv,ns,gradval)
+    Sigmainv_f = Sigmainv * f;
+    val = gradval .* sum(Sigmainv_f) ;   
+    out = ns - exp(f) .* (a + b) - Sigmainv_f + val;
 end
