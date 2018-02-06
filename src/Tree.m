@@ -758,6 +758,11 @@ classdef Tree
            % Update likelihood if necessary
            if node.Updatellike
                out = llike(out,out.Allnodes{newind}.Id,y);
+           elseif rand < .5 % Randomly update to see if a better llike can be found
+               outtmp = llike(out,out.Allnodes{newind}.Id,y);
+               if outtmp.Lliketree > out.Lliketree
+                   out = outtmp;
+               end
            end
            % Add in Log-likelihood of the parent node
            out.Lliketree = out.Lliketree + out.Allnodes{newind}.Llike;

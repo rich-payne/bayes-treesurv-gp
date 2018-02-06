@@ -16,12 +16,18 @@ function [f_final,marg_y,Omegainv] =  get_f(ns,a,b,Z,tau,l,nugget,eps)
             fhat(~ind) = f_interp;
         end
     end
+    %fhat = ones(K,1) .* hazardhat;
     
     %Sigma_exp = ;
-    Sigma = get_sigma(Z,tau,l,sqrt(nugget));
+    %Sigma = get_sigma(Z,tau,l,sqrt(nugget));
     %Sigmainv = 1/(tau^2) * inv(Sigma_exp);
     %Sigmainv = inv(Sigma);
-    Sigmainv = get_sigma_inv(K,tau,l,Z(2) - Z(1));
+    if K > 1
+        dz = Z(2) - Z(1);
+    else
+        dz = [];
+    end
+    Sigmainv = get_sigma_inv(K,tau,l,dz);
     
     % Sigmainv * Sigma
     
@@ -58,7 +64,7 @@ function [f_final,marg_y,Omegainv] =  get_f(ns,a,b,Z,tau,l,nugget,eps)
            f_final = fnew;
        end
        if cntr == cntr_max
-           % disp('Maximum number of iterations reached in Newton''s method');
+           %disp('Maximum number of iterations reached in Newton''s method');
        end
        f = fnew;
        cntr = cntr + 1;
@@ -66,7 +72,7 @@ function [f_final,marg_y,Omegainv] =  get_f(ns,a,b,Z,tau,l,nugget,eps)
     if nargout == 1
         return;
     else
-        Sigmainv_f = Sigma \ f_final;
+        Sigmainv_f = Sigmainv * f_final;
         g0val = sum(ns .* f_final) - sum(exp(f_final) .* (a + b)) - ...
             .5* f_final' * Sigmainv_f;
         Omegainv = -get_hess(f_final,a,b,Sigmainv);
