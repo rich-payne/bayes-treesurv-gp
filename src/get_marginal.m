@@ -36,6 +36,12 @@ function [marg_y,out] = get_marginal(Y,K,s,eps,tau,l,nugget,EB)
     % K = length(s) - 1;
     Z = (s(1:K) + diff(s)/2)';
     
+    % Rescale data, Z, and s;
+    theta_hat = sum(Y(:,2)) / sum(Y(:,1)); % estimate of exponential survival function parameter
+%     Z = Z .* theta_hat;
+%     Y(:,1) = Y(:,1) .* theta_hat;
+%     s = s .* theta_hat;
+    
     % An index of which of the K bins each observation falls in
     % Recalculated with new s
     binind = zeros(n,1);
@@ -61,7 +67,7 @@ function [marg_y,out] = get_marginal(Y,K,s,eps,tau,l,nugget,EB)
     for ii=1:K
         a(ii) = sum( Y(binind == ii,1) - s(ii) );
     end
-    b = diff(s') .* ms;
+    b = diff(s') .* ms;    
             
     % Here's where EB happens...
     if EB == 1
@@ -94,5 +100,6 @@ function [marg_y,out] = get_marginal(Y,K,s,eps,tau,l,nugget,EB)
         out.binind = binind;
         out.Z = Z;
         out.lprior = get_lprior(tau,l); % prior on hyperparmeters...
+        out.theta_hat = theta_hat;
     end
 end

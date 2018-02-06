@@ -33,6 +33,7 @@ classdef Nodes
         Updatesplits % 0 if no update of the splits is necessary, 1 if needed
         tau % EB scale hyperparameters 
         l % EB length hyperparamter
+        theta_hat % value by which the data has been multiplied
     end
     methods
         % Constructor
@@ -96,6 +97,7 @@ classdef Nodes
             
             obj.tau = [];
             obj.l = [];
+            obj.theta_hat = 1;
             % Llike and splits needs to be computed
             obj.Updatellike = 1;
             obj.Updatesplits = 1;
@@ -166,6 +168,7 @@ classdef Nodes
             out.tau = res.tau;
             out.l = res.l;
             out.Llike = marg_y;
+            out.theta_hat = res.theta_hat;
         end
         
         % Obtain possible splitting values for a node
