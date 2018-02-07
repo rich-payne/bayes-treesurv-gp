@@ -12,7 +12,7 @@ function Sigmainv = get_sigma_inv(K,tau,l,dz)
         % Sigmainv = spdiags(B,[0,1,-1],K,K);
         rhovec = [1; (1 + rho^2) .* ones(K-2,1); 1];
         rhovec2 = rho .* ones(K-1,1);
-        Sigmainv = diag(rhovec) + diag(rhovec2,-1) + diag(rhovec2,1);
+        Sigmainv = diag(rhovec) - diag(rhovec2,-1) - diag(rhovec2,1);
         Sigmainv = sparse(Sigmainv);
     elseif K == 2
         rho = exp(-dz ./ l);
