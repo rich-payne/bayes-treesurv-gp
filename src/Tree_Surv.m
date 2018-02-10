@@ -26,7 +26,7 @@
 %
 % Optional Arguments:
 % nmcmc: number of MCMC iterations, default 10,000
-% burn: number of burn in iterations, default 1,000
+% burn: number of burn-in iterations, default 1,000
 % leafmin: the minimum number of observations required at a terminal node.
 %          Default is 25.
 % gamma: prior hyperparameter governing size/shape of tree.  See Chipman's
@@ -75,6 +75,7 @@ function Tree_Surv(y,X,varargin)
     addParameter(ip,'nprint',100);
     addParameter(ip,'resume',[]);
     addParameter(ip,'saveall',0);
+    %addParameter(ip,'save_every',5000);
     addParameter(ip,'swapfreq',1);
     addParameter(ip,'seed','shuffle');
     addParameter(ip,'suppress_errors_on_workers',0);
@@ -100,6 +101,7 @@ function Tree_Surv(y,X,varargin)
     nprint = ip.Results.nprint;
     resume = ip.Results.resume;
     saveall = ip.Results.saveall;
+    %save_every = ip.Results.save_every;
     seed = ip.Results.seed;
     swapfreq = ip.Results.swapfreq;
     suppress_errors_on_workers = ip.Results.suppress_errors_on_workers;
@@ -461,6 +463,10 @@ function Tree_Surv(y,X,varargin)
                 lprior(ii - burn) = T.Prior;
             end
             
+            % Save values
+            %if mod(ii,save_every) == 0
+                
+            
         end
         warning('on','MATLAB:integral:NonFiniteValue');
         perc_accept = naccept/(nmcmc + burn);
@@ -494,20 +500,50 @@ function Tree_Surv(y,X,varargin)
             'acceptance',perc_accept,...
             'treesize',treesize,'move_accepts',move_accepts,...
             'swap_accept',swap_accept,'a_accept',a_accept);
-        % Save output
-        if saveall
-            savenames = 1:m;
-        else
-            savenames = master;
-        end
-        if any(myname == savenames)
-            fname = strcat(filepath,'mcmc_id',num2str(myname),'.mat');
-            swap_percent_global = swapaccepttotal_global/swaptotal_global;
-            strt = tic;
+        % Clear memory
+        TREES = [];
+        % Save output sequentially
+        swap_percent_global = swapaccepttotal_global/swaptotal_global;
+        fname = strcat(filepath,'mcmc_id',num2str(myname),'.mat');
+        nlabs = numlabs;
+        if myname == master
+            disp(strcat(['Saving data on worker ',num2str(myname),'.']));
             savedata(fname,output,swap_percent_global);
-            stp = toc(strt);
-            savetime = stp - strt;
+            output = []; % clear memory
+            if saveall
+                labSend(1,master + 1);
+            else
+                labSend(0,master + 1);
+            end
+        else
+            tosave = labReceive(myname - 1);
+            if tosave
+                disp(strcat(['Saving data on worker ',num2str(myname),'.']));
+                savedata(fname,output,swap_percent_global);
+                output = []; % clear memory
+                if myname < nlabs
+                    labSend(1,myname + 1);
+                end
+            elseif myname < nlabs
+                labSend(0,myname + 1);
+            end
         end
+                
+%         if saveall
+%             savenames = 1:m;
+%             % save using the psave button
+%             % psave('mcmc_out');
+%         else
+%             savenames = master;
+%         end
+%         if any(myname == savenames)
+%             fname = strcat(filepath,'mcmc_id',num2str(myname),'.mat');
+%             swap_percent_global = swapaccepttotal_global/swaptotal_global;
+%             %strt = tic;
+%             savedata(fname,output,swap_percent_global);
+%             %stp = toc(strt);
+%             %savetime = stp - strt;
+%         end
         % Turn on suppressed warnings
         warning(oldwarnstate);
         warning('on','MATLAB:illConditionedMatrix');
@@ -519,6 +555,9 @@ function Tree_Surv(y,X,varargin)
         if parallelprofile
             mpiprofile viewer
             mpiprofile off
+        end
+        if myname == master
+            disp(strcat(['Finished: ', fname]))
         end
     end
 end

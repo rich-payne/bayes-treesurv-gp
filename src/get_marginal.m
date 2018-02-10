@@ -37,7 +37,7 @@ function [marg_y,out] = get_marginal(Y,K,s,eps,tau,l,nugget,EB)
     Z = (s(1:K) + diff(s)/2)';
     
     % Rescale data, Z, and s;
-    theta_hat = sum(Y(:,2)) / sum(Y(:,1)); % estimate of exponential survival function parameter
+    % theta_hat = sum(Y(:,2)) / sum(Y(:,1)); % estimate of exponential survival function parameter
 %     Z = Z .* theta_hat;
 %     Y(:,1) = Y(:,1) .* theta_hat;
 %     s = s .* theta_hat;
@@ -100,6 +100,6 @@ function [marg_y,out] = get_marginal(Y,K,s,eps,tau,l,nugget,EB)
         out.binind = binind;
         out.Z = Z;
         out.lprior = get_lprior(tau,l); % prior on hyperparmeters...
-        out.theta_hat = theta_hat;
+        % out.theta_hat = theta_hat;
     end
 end

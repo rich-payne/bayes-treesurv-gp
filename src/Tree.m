@@ -1229,7 +1229,9 @@ classdef Tree
             end
             n = length(obj.Allnodes);
             if n <= 1
-                error('Tree must be more than a root node.')
+                figure()
+                xlabel('Tree is a root node.');
+                %error('Tree must be more than a root node.')
             else
                 nodegraph = zeros(1,n);
                 for ii = 1:n
