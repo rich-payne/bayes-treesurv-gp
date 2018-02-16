@@ -52,6 +52,7 @@ function pdraws = get_surv_tree(thetree,Y,X,ndraw,graph,x0,ystar,alpha)
         if graph
             if ~dosubplot
                 figure(cntr);
+            elseif s1 == 1 && s2 == 1 % Do no subplot command
             else
                 subplot(s1,s2,cntr);
             end
@@ -60,7 +61,7 @@ function pdraws = get_surv_tree(thetree,Y,X,ndraw,graph,x0,ystar,alpha)
         if graph
             title(strcat(['Node Index: ',num2str(ii)]));
             xlim([0,Ymax]);
-            ylim([0,1]);
+            ylim([-.05,1.05]);
         end
         cntr = cntr + 1;
     end

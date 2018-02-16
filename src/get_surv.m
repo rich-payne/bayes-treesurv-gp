@@ -47,7 +47,7 @@ function out = get_surv(Y_orig,res,ndraw,graph,ystar,alpha)
     out.pmean = pmean;
     out.CI = qtiles;
     if graph
-        plot(ystar*Ymax,pmean,'-k',ystar*Ymax,qtiles(1,:),'--k',ystar*Ymax,qtiles(2,:),'--k')
+        plot(ystar*Ymax,pmean,':k',ystar*Ymax,qtiles(1,:),'--k',ystar*Ymax,qtiles(2,:),'--k')
         graphpoints = 0;
         if graphpoints
             survpoints = interp1(ystar*Ymax,pmean,Y_orig);
