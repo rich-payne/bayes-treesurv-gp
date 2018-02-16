@@ -1074,7 +1074,7 @@ classdef Tree
             if length(obj.Allnodes) > 1 % If more than root node
                 while ~isempty(thenode.Rule)
                     if strcmp(obj.Xclass{thenode.Rule{1}},'double')
-                        if x{:,thenode.Rule{1}} < thenode.Rule{2}
+                        if x{:,thenode.Rule{1}} <= thenode.Rule{2}
                             direction = 0; % 0 for left, 1 for right
                         else
                             direction = 1;
