@@ -1233,6 +1233,7 @@ classdef Tree
                 pdensities = 1;
                 y = varargin{2};
                 X = varargin{3};
+                obj = fatten_tree(obj,X);
             end
             if nargin >= 4
                 kaplan = varargin{4};
