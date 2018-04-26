@@ -1,18 +1,20 @@
-function [truemarginal,marges,thegrid] = get_truemarginal(Y,res,dtau,dl,dmu,ntau,nl,nmu)
-    gridmu = linspace(res.mu - dmu .* nmu./2,res.mu + dmu .* nmu ./2,nmu);
-    gridtau = linspace(res.tau - dtau .* ntau/2,res.tau + dtau .* ntau/2,ntau);
-    gridl = linspace(res.l - dl .* nl/2,res.l + dl .* res.l/2,nl);
+function [truemarginal,marges,X,Y] = get_truemarginal(Ystd,tau,l,dtau,dl,ntau,nl,K)
+    gridtau = linspace(tau - dtau .* ntau/2,tau + dtau .* ntau/2,ntau);
+    gridl = linspace(l - dl .* nl/2,l + dl .* nl/2,nl);
 
     % Restrict to only positive values of tau and l
     gridtau(gridtau <= 0) = [];
     gridl(gridl <= 0) = [];
 
-    thegrid = combvec(gridmu,gridtau,gridl);
+    %thegrid = combvec(gridtau,gridl);
+    [X,Y] = meshgrid(gridtau,gridl);
 
-    marges = zeros(size(thegrid,2),1);
-    for ii=1:size(thegrid,2)
-        tmpmarg = get_marginal(Y,20,[],1e-10,thegrid(2,ii),thegrid(3,ii),thegrid(1,ii),1e-10,0);
-        marges(ii) = tmpmarg;
+    marges = zeros(size(X,1),size(X,2));
+    for ii=1:size(X,1)
+        for jj=1:size(X,2)
+            tmpmarg = get_marginal(Ystd,K,[],1e-10,X(ii,jj),Y(ii,jj),0,0);
+            marges(ii,jj) = tmpmarg;
+        end
     end
-    truemarginal = dmu .* dtau .* dl .* sum(exp(marges));
+    truemarginal = dtau .* dl .* sum(sum(exp(marges)));
 end

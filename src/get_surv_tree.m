@@ -1,4 +1,4 @@
-function pdraws = get_surv_tree(thetree,Y,X,ndraw,graph,x0,ystar,alpha)
+function pdraws = get_surv_tree(thetree,Y,X,ndraw,graph,x0,ystar,alpha,the_title)
     if ~exist('alpha','var')
         alpha = .05;
     end
@@ -59,7 +59,11 @@ function pdraws = get_surv_tree(thetree,Y,X,ndraw,graph,x0,ystar,alpha)
         end
         pdraws = get_surv(Y,res,ndraw,graph,ystar,alpha);
         if graph
-            title(strcat(['Node Index: ',num2str(ii)]));
+            if isempty(the_title)
+                title(strcat(['Node Index: ',num2str(ii)]));
+            else
+                title(the_title)
+            end
             xlim([0,Ymax]);
             ylim([-.05,1.05]);
         end

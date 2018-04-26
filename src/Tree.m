@@ -1110,7 +1110,7 @@ classdef Tree
         % y: reponse variable
         % xlims: x range
         % ylims: y range
-        function treelines(obj,nodename,level,treedepth,parentxloc,LR,plotdens,y,xlims,ylims)
+        function treelines(obj,nodename,level,treedepth,parentxloc,LR,plotdens,y,X,kaplan,xlims,ylims)
             width = 1; % space between terminal nodes
             nind = nodeind(obj,nodename);
             node = obj.Allnodes{nind};
@@ -1157,8 +1157,8 @@ classdef Tree
                 end
             end
             if ~isempty(node.Lchild) && ~isempty(node.Rchild)
-                treelines(obj,node.Lchild,level-1,treedepth,xval,'L',plotdens,y,xlims,ylims)
-                treelines(obj,node.Rchild,level-1,treedepth,xval,'R',plotdens,y,xlims,ylims)
+                treelines(obj,node.Lchild,level-1,treedepth,xval,'L',plotdens,y,X,kaplan,xlims,ylims)
+                treelines(obj,node.Rchild,level-1,treedepth,xval,'R',plotdens,y,X,kaplan,xlims,ylims)
             elseif isempty(node.Lchild) && isempty(node.Rchild) && ~isempty(plotdens)
                 xrange = plotdens(1,2) - plotdens(1,1);
                 yrange = plotdens(2,2) - plotdens(2,1);
@@ -1173,25 +1173,36 @@ classdef Tree
                 yvald = yvald*plotdens(4,2) + plotdens(3,2) - theheight;
                 axes('OuterPosition',[xvald,yvald,thewidth,theheight])
                 box on
-                if isempty(y)
+                if isempty(y) || isempty(X)
                     error('No data to plot densities.')
                 else
-                    try 
-                        ysub = y(node.Xind);
-                        thetab = tabulate(ysub);
-                        if any(thetab(:,3) > 20)
-                            lgpdens(ysub,sort(unique(ysub)),'range',...
-                                [min(ysub),max(ysub)]);
-                        else
-                            lgpdens(ysub)
-                        end
-                    catch
-                        try
-                            lgpdens(y(node.Xind),'imp_sampling','off')
-                        catch
-                            lgpdens(y(node.Xind),'speedup','on')
-                        end
+                    ndraw = 10000;
+                    graph = 1;
+                    x0 = X(node.Xind(1),:);
+                    ystar = [];
+                    alpha_val = .05;
+                    get_surv_tree(obj,y,X,ndraw,graph,x0,ystar,alpha_val,' ');
+                    % Add Kaplan Meier plot just to compare
+                    if kaplan
+                        ypart = y(node.Xind,1);
+                        cens = y(node.Xind,2) == 0;
+                        [f,x,flo,fup] = ecdf(ypart,'censoring',cens);
+                        hold on
+                            plot(x,1-f,':r')
+                            plot(x,1-flo,'--r');
+                            plot(x,1-fup,'--r');
+%                             fup = fup(2:(end-1));
+%                             flo = flo(2:(end-1));
+%                             x = x(2:(end-1));
+%                             xxx = [x',fliplr(x')];
+%                             yyy = [1-fup',fliplr(1-flo')];
+%                             h = fill(xxx,yyy,[.8, .8, .8]);
+%                             set(h,'EdgeColor','none'); % get rid of line
+%                             alpha(.75); 
+                        hold off
                     end
+                    
+                    
                     if ~isempty(xlims)
                         xlim(xlims)
                     end
@@ -1213,19 +1224,28 @@ classdef Tree
                 pdensities = 0;
                 obj = varargin{1};
             end
-            if nargin >= 2
-                pdensities = 1;
-                y = varargin{2};
+            if nargin == 2
+                error('Must specify y and X');
             end
             if nargin >= 3
-                xlims = varargin{3};
+                pdensities = 1;
+                y = varargin{2};
+                X = varargin{3};
             end
             if nargin >= 4
-                ylims = varargin{4};
+                kaplan = varargin{4};
+            else
+                kaplan = 1 ;
+            end
+            if nargin >= 5
+                xlims = varargin{5};
+            end
+            if nargin >= 6
+                ylims = varargin{6};
             end
             
-            if nargin >= 5
-                error('Maximum of 4 arguments')
+            if nargin >= 7
+                error('Maximum of 6 arguments')
             end
             n = length(obj.Allnodes);
             if n <= 1
@@ -1245,14 +1265,14 @@ classdef Tree
                 treedepth = max(nodegraph);
                 figure;
                 hold on;
-                treelines(obj,rootnodename,0,treedepth,'','',[],[],[],[])
+                treelines(obj,rootnodename,0,treedepth,'','',[],[],[],kaplan,[],[])
                 ylim([-treedepth-1,0]);
                 axisparms = gca;
                 plotdens = [axisparms.XLim; axisparms.YLim;
                     axisparms.Position(1:2); axisparms.Position(3:4)];
                 axis off;
                 if pdensities
-                    treelines(obj,rootnodename,0,treedepth,'','',plotdens,y,xlims,ylims)
+                    treelines(obj,rootnodename,0,treedepth,'','',plotdens,y,X,kaplan,xlims,ylims)
                 end
                 hold off;
             end
