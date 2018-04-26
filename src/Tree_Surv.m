@@ -1,58 +1,70 @@
-%     This file is part of bayes-treed-cde.
-% 
-%     bayes-treed-cde is free software: you can redistribute it and/or modify
-%     it under the terms of the GNU General Public License as published by
-%     the Free Software Foundation, either version 3 of the License, or
-%     (at your option) any later version.
-% 
-%     bayes-treed-cde is distributed in the hope that it will be useful,
-%     but WITHOUT ANY WARRANTY; without even the implied warranty of
-%     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-%     GNU General Public License for more details.
-% 
-%     You should have received a copy of the GNU General Public License
-%     along with bayes-treed-cde.  If not, see <http://www.gnu.org/licenses/>.
+%    bayes-treesurv-gp provides a Bayesian tree partition model to flexibly 
+%    estimate survival functions in various regions of the covariate space.
+%    Copyright (C) 2017-2018  Richard D. Payne
 %
-%     Copyright 2016-2017, Richard Payne
-
-% This function performs MCMC using parallel tempering to search the
-%   posterior of trees for conditional density estimation. This 
-%   function writes the results to a file which can then be loaded into the
-%   workspace.
+%    This program is free software: you can redistribute it and/or modify
+%    it under the terms of the GNU General Public License as published by
+%    the Free Software Foundation, either version 3 of the License, or
+%    (at your option) any later version.
 %
-% Required inputs:
-% y: response variable, vector of a continuous response.
-% X: table of covariates
+%    This program is distributed in the hope that it will be useful,
+%    but WITHOUT ANY WARRANTY; without even the implied warranty of
+%    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%    GNU General Public License for more details.
 %
-% Optional Arguments:
-% nmcmc: number of MCMC iterations, default 10,000
-% burn: number of burn-in iterations, default 1,000
-% leafmin: the minimum number of observations required at a terminal node.
-%          Default is 25.
-% gamma: prior hyperparameter governing size/shape of tree.  See Chipman's
+%    You should have received a copy of the GNU General Public License
+%    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+%
+%    This function performs MCMC using parallel tempering to search the
+%      posterior of trees for survival analysis. This 
+%      function writes the results to a file which can then be loaded into the
+%      workspace.  This function only works if a parpool() statement is
+%      issued before calling the function.
+%
+%    Required inputs:
+%    y: A two-column matrix with the survival times in the first column
+%      and the survival indicator in the second column (0 if censored, 
+%      1 if observed).
+%    X: table of covariates, can include categorical covariates.
+%
+%    Optional Arguments:
+%    beta: prior hyperparameter governing size/shape of tree.  See Chipman's
+%           CART paper for details. Default is 1.
+%    bigK: the number of bins used to estimate the hazard function, default:
+%      100
+%    burn: number of burn-in iterations, default 1,000
+%    EB: Type of optimization.  Default is 1.  No other options at present.
+%    eps: The convergence threshold for Newton's method.  Default is 1e-10.
+%    filepath: where to place MCMC output. Default is './output/'
+%    gamma: prior hyperparameter governing size/shape of tree.  See Chipman's
 %        CART paper for details. Default is .95.
-% beta: prior hyperparameter governing size/shape of tree.  See Chipman's
-%        CART paper for details. Default is 1.
-% k: The number of posterior trees to be returned.  If 0, all trees from
-%    the MCMC algorithm are returned.  Otherwise, the k trees with the
-%    highest marginal likelihoods are returned to save on memory. Default
-%    is 0.
-% p: the probability of performing an incremental change step on a
-%    continuous variable rather than drawing from the prior. Default is
-%    .75.
-% parallelprofile: If 1, parallel profiling is performed to determine code
+%    hottemp: the smallest inverse temperature to be used.  Default is .1
+%    k: The number of posterior trees to be returned.  If 0, all trees from
+%       the MCMC algorithm are returned.  Otherwise, the k trees with the
+%       highest marginal likelihoods are returned to save on memory. Default
+%       is 0.
+%    leafmin: the minimum number of observations required at a terminal node.
+%          Default is 25.
+%    nmcmc: number of MCMC iterations, default 10,000
+%    nprint: MCMC info will be printed every nprint iterations, default is 100
+%    nugget: Do not specify, deprecated.
+%    p: the probability of performing an incremental change step on a
+%       continuous variable rather than drawing from the prior. Default is
+%       .75.
+%    parallelprofile: If 1, parallel profiling is performed to determine code
 %                  efficiency.  Default is 0.
-% hottemp: the smallest inverse temperature to be used.  Default is .1
-% saveall: If 1, the results of all tempered chains are saved as output.
+%    resume: A string containing the filepath to the last MCMC run from which
+%      the user would like the MCMC to continue from.
+%    saveall: If 1, the results of all tempered chains are saved as output.
 %          Default is 0.
-% swapfreq: The tempered MCMC chains are swapped every 'swapfeq' iterations.
+%    swapfreq: The tempered MCMC chains are swapped every 'swapfeq' iterations.
 %           Default is 1. 
-% seed: specify a seed for the MCMC run.  This creates independent random seeds
+%    seed: specify a seed (integer) for the MCMC run.  This creates independent random seeds
 %       across each of the tempered chains.  Default is a random seed,
 %       'shuffle'.
-% suppress_errors_on_workers: If 1, suppresses warnings on workers. Default
+%    suppress_errors_on_workers: If 1, suppresses warnings on workers. Default
 %                             is 0. 
-% filepath: where to place MCMC output. Default is './output/'
+
 
 function Tree_Surv(y,X,varargin)
     % Parse function

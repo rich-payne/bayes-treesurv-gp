@@ -1,3 +1,48 @@
+%    bayes-treesurv-gp provides a Bayesian tree partition model to flexibly 
+%    estimate survival functions in various regions of the covariate space.
+%    Copyright (C) 2017-2018  Richard D. Payne
+%
+%    This program is free software: you can redistribute it and/or modify
+%    it under the terms of the GNU General Public License as published by
+%    the Free Software Foundation, either version 3 of the License, or
+%    (at your option) any later version.
+%
+%    This program is distributed in the hope that it will be useful,
+%    but WITHOUT ANY WARRANTY; without even the implied warranty of
+%    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%    GNU General Public License for more details.
+%
+%    You should have received a copy of the GNU General Public License
+%    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+%
+%    This function plots the posterior survival curves for each of the
+%    terminal nodes of a tree.
+%
+%    INPUTS
+%    thetree: An object of Tree class.
+%    Y: A two-column matrix with the survival times in the first column
+%      (on original scale) and the survival indicator in
+%      the second column (0 if censored, 1 if observed).
+%    X: The covariates
+%    ndraw: the number of Monte Carlo draws to produce the posterior
+%      survival function
+%    graph: 1 to produce a graph.  0 to suppress graphing.
+%    x0: If empty, a graph is produced for each terminal node.  If
+%      non-empty, it must be a table with one row and the same number of
+%      columns of X.  Specifying x0 produces the posterior survival function
+%      for an observation with covariates x0.
+%    ystar: A grid where the posterior survival function will be evaluated.
+%      If empty, grid is determined automatically.
+%    alpha: the significance level for the credible itnervals.
+%    the_title: A string to specify the title of the graphs.  If empty, the
+%      Node indexes are used to title the graphs.
+%
+%    OUTPUT
+%    pdraws: If x0 is empty (i.e. all survival functions are plotted), then
+%      pdraws is empty.  If x0 is non-empty, the output from the get_surv
+%      function for the data in the corresponding terminal node is
+%      returned.
+
 function pdraws = get_surv_tree(thetree,Y,X,ndraw,graph,x0,ystar,alpha,the_title)
     if ~exist('alpha','var')
         alpha = .05;

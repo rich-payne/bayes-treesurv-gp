@@ -15,9 +15,6 @@
 %    You should have received a copy of the GNU General Public License
 %    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 %
-%    This function obtains the MAP estimate of the latent Gaussian process
-%    used to model the hazad function.
-%
 %    INPUTS
 %    ns: a vector containing the number of uncensored observations which
 %      fall into each bin.
@@ -32,6 +29,13 @@
 %      latent process, f. 
 %    nugget: unused argument.  Ignore.
 %    eps: the threshold used to assess convergence in Newton's method.
+%
+%    OUTPUTS
+%    f_final: the MAP estimate of the latent process, f.
+%    marg_y: the approximated marginal of the data given tau, l.
+%    Omegainv: the precision matrix for the latent process, f, utilizing
+%      the Laplace approximation.  That is, p(f|y) is approximated (via the
+%      Laplace approximation) to be N(f_final, Omegainv^{-1})
 
 function [f_final,marg_y,Omegainv] =  get_f(ns,a,b,Z,tau,l,nugget,eps)
     % warning('off','MATLAB:nearlySingularMatrix')

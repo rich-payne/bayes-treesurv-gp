@@ -1,3 +1,23 @@
+%    bayes-treesurv-gp provides a Bayesian tree partition model to flexibly 
+%    estimate survival functions in various regions of the covariate space.
+%    Copyright (C) 2017-2018  Richard D. Payne
+%
+%    This program is free software: you can redistribute it and/or modify
+%    it under the terms of the GNU General Public License as published by
+%    the Free Software Foundation, either version 3 of the License, or
+%    (at your option) any later version.
+%
+%    This program is distributed in the hope that it will be useful,
+%    but WITHOUT ANY WARRANTY; without even the implied warranty of
+%    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%    GNU General Public License for more details.
+%
+%    You should have received a copy of the GNU General Public License
+%    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+%
+%    THIS FUNCTION IS NOT YET OPERATIONAL.
+
+
 function [tau,l] = get_thetas_EM(Y,tau,l,nugget,K,max_cntr,tol)
     warning('off','MATLAB:nearlySingularMatrix')
     options = optimset('Display','off');

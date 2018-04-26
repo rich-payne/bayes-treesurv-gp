@@ -1,28 +1,32 @@
-%     This file is part of bayes-treed-cde.
-% 
-%     bayes-treed-cde is free software: you can redistribute it and/or modify
-%     it under the terms of the GNU General Public License as published by
-%     the Free Software Foundation, either version 3 of the License, or
-%     (at your option) any later version.
-% 
-%     bayes-treed-cde is distributed in the hope that it will be useful,
-%     but WITHOUT ANY WARRANTY; without even the implied warranty of
-%     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-%     GNU General Public License for more details.
-% 
-%     You should have received a copy of the GNU General Public License
-%     along with bayes-treed-cde.  If not, see <http://www.gnu.org/licenses/>.
+%    bayes-treesurv-gp provides a Bayesian tree partition model to flexibly 
+%    estimate survival functions in various regions of the covariate space.
+%    Copyright (C) 2017-2018  Richard D. Payne
 %
-%     Copyright 2016-2017, Richard Payne
+%    This program is free software: you can redistribute it and/or modify
+%    it under the terms of the GNU General Public License as published by
+%    the Free Software Foundation, either version 3 of the License, or
+%    (at your option) any later version.
+%
+%    This program is distributed in the hope that it will be useful,
+%    but WITHOUT ANY WARRANTY; without even the implied warranty of
+%    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%    GNU General Public License for more details.
+%
+%    You should have received a copy of the GNU General Public License
+%    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-% Gets the proposal probabilities based on current tree and the initial
-%   proposal probabilities specified by the user. 
-% T: an object of class T
-% probs: a vector of the original proposal probabilities of the steps
-% nbirths: number of births the Tree has available
-% swappossible: [] or 1 indicating no/yes to a swap step on tree T
-% p_g, p_p, p_c, p_s, modified proposal probabilities for the tree for the
-%   grow, prune, change, and swap modifications.
+%    Gets the proposal probabilities based on current tree and the initial
+%      proposal probabilities specified by the user. 
+%
+%    INPUTS
+%    T: an object of class Tree
+%    probs: a vector of the original proposal probabilities of the steps
+%    nbirths: number of births the Tree has available
+%    swappossible: [] or 1 indicating no/yes to a swap step on tree T
+%
+%    OUTPUTS
+%    p_g, p_p, p_c, p_s, modified proposal probabilities for the tree for the
+%      grow, prune, change, and swap modifications.
 function [p_g,p_p,p_c,p_s] = propprobs(T,probs,nbirths,swappossible)
     if length(T.Allnodes) >= 5
         if nbirths > 0 % birth step possible

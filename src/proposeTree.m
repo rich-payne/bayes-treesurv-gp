@@ -1,38 +1,40 @@
-%     This file is part of bayes-treed-cde.
-% 
-%     bayes-treed-cde is free software: you can redistribute it and/or modify
-%     it under the terms of the GNU General Public License as published by
-%     the Free Software Foundation, either version 3 of the License, or
-%     (at your option) any later version.
-% 
-%     bayes-treed-cde is distributed in the hope that it will be useful,
-%     but WITHOUT ANY WARRANTY; without even the implied warranty of
-%     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-%     GNU General Public License for more details.
-% 
-%     You should have received a copy of the GNU General Public License
-%     along with bayes-treed-cde.  If not, see <http://www.gnu.org/licenses/>.
+%    bayes-treesurv-gp provides a Bayesian tree partition model to flexibly 
+%    estimate survival functions in various regions of the covariate space.
+%    Copyright (C) 2017-2018  Richard D. Payne
 %
-%     Copyright 2016-2017, Richard Payne
-
-% Proposes Tree for the reversible jump MCMC algorithm with parallel
-%   tempering.  Specifically, this is used in TreeMCMCParalleltemp() and also
-%   may be extended to be used in the multiset procedure.
+%    This program is free software: you can redistribute it and/or modify
+%    it under the terms of the GNU General Public License as published by
+%    the Free Software Foundation, either version 3 of the License, or
+%    (at your option) any later version.
 %
-% T: Current tree in MCMC chain
-% y: response variable
-% X: covariate matrix
-% allprobs: probability of a grow, prune, change, and swap step (vector of
+%    This program is distributed in the hope that it will be useful,
+%    but WITHOUT ANY WARRANTY; without even the implied warranty of
+%    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%    GNU General Public License for more details.
+%
+%    You should have received a copy of the GNU General Public License
+%    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+% 
+%    Proposes tree for the reversible jump MCMC algorithm with parallel
+%      tempering.  Specifically, this is used in Tree_Surv().
+%
+%    INPUTS
+%    T: Current tree in MCMC chain
+%    y: response variable and censoring indicator (2 columns)
+%    X: covariate matrix
+%    allprobs: probability of a grow, prune, change, and swap step (vector of
 %           length 4)
-% p: probability of moving to the next largest or smallest value for
-%    continuous rules in a change step rather than draw a rule from a prior.
-% temp: inverse temperature of the tree
-% mset: 1 if proposing tree for a multiset, 0 otherwise.
-% Tstar: proposed tree
-% prop_ratio: the logged proposal ratio of the MH algorithm
-% r: integer (1:4) indicating whether a grow, prune, change, or swap step
-%    was seleted, respectively.
-% lr: the log of the MH ratio
+%     p: probability of moving to the next largest or smallest value for
+%       continuous rules in a change step rather than draw a rule from a prior.
+%       temp: inverse temperature of the tree
+%     mset: 1 if proposing tree for a multiset, 0 otherwise.
+
+%     OUTPUTS
+%     Tstar: proposed tree
+%     prop_ratio: the logged proposal ratio of the MH algorithm
+%     r: integer (1-4) indicating whether a grow, prune, change, or swap step
+%       was seleted, respectively.
+%     lr: the log of the MH ratio
 function [Tstar,prop_ratio,r,lr] = proposeTree(T,y,X,allprobs,p,temp,mset)
     Tprior = T.Prior;
     % Initial values

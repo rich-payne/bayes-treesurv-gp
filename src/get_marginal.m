@@ -1,3 +1,59 @@
+%    bayes-treesurv-gp provides a Bayesian tree partition model to flexibly 
+%    estimate survival functions in various regions of the covariate space.
+%    Copyright (C) 2017-2018  Richard D. Payne
+%
+%    This program is free software: you can redistribute it and/or modify
+%    it under the terms of the GNU General Public License as published by
+%    the Free Software Foundation, either version 3 of the License, or
+%    (at your option) any later version.
+%
+%    This program is distributed in the hope that it will be useful,
+%    but WITHOUT ANY WARRANTY; without even the implied warranty of
+%    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%    GNU General Public License for more details.
+%
+%    You should have received a copy of the GNU General Public License
+%    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+%
+%    get_marginal obtains the marginal of the data which is approximated
+%      using Laplace approximations.
+%
+%    Y: a two-column matrix with the survival times in the first column
+%      (scaled to be on the interval (0,1]) and the survival indicator in
+%      the second column (0 if censored, 1 if observed).
+%    K: the number of piecewise constant regions (bins) the hazard function 
+%       will be estimated with.  Will be replaced if s is specified.
+%    s: the bin boundaries of length K+1.  If s is empty, s is constructed
+%      automatically using K.
+%    eps: the threshold used to determine convergence of Newton's method.
+%    tau: the starting value of the magnitude hyperparameter
+%    l: the starting value of the length-scale hyperparameter
+%    nugget: Not used. Ignore. Use 0.
+%    EB: The empirical Bayes method to be used.  Currently, only one
+%      optimization procedure is available.  1 optimizes hyperparameters,
+%      0 leaves them at their provided values.
+%
+%    OUTPUT
+%    marg_y: the approximate marginal of the data.
+%    out: A structure with the following fields:
+%      f: the MAP estimate of the latent process of the approximate posterior
+%      marg_y: the approximate marginal of the data.
+%      tau: the value of tau
+%      l: the value of l
+%      Omegainv: the precision matrix of the approximate posterior of f.
+%      s: the bin boundaries of the hazard function
+%      ns: a vector containing the number of uncensored observations which
+%        fall into each bin.
+%      a: a vector containing the sum of all of the distances between the
+%        survival times and the lower limit of their respective bins.
+%      b: a vector containing the widths of each bin multiplied by the number
+%        of observations which survive past the upper limit of the bin.
+%      ms: a vector containing the number of observations which survival
+%        past each bin.
+%      binind: an index specifying which bin each observation belongs to
+%      Z: the bin centers
+%      lprior: the value of the logged prior for tau and l
+
 function [marg_y,out] = get_marginal(Y,K,s,eps,tau,l,nugget,EB)
     % Assumes Y has been scaled on the interval (0,1].
     %   but doesn't throw an error at the moment.
@@ -73,7 +129,7 @@ function [marg_y,out] = get_marginal(Y,K,s,eps,tau,l,nugget,EB)
     if EB == 1
         [tau,l] = get_thetas(ns,a,b,Z,tau,l,nugget,eps);
     elseif EB  == 2
-        [tau,l] = get_thetas_EM(Y,tau,l,nugget,K,max_cntr_EM,tol_EM);
+        % [tau,l] = get_thetas_EM(Y,tau,l,nugget,K,max_cntr_EM,tol_EM);
     end
     
     %if justf
