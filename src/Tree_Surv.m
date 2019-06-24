@@ -309,21 +309,15 @@ function Tree_Surv(y,X,varargin)
        
     if pool_exists
         spmd(m)
-            % Turn off integration warning
-            warning('off','MATLAB:integral:NonFiniteValue');
-            warning('off','MATLAB:illConditionedMatrix');
-            warning('off','MATLAB:singularMatrix');
+            % Turn off warnings
+            warn_on_off('off');
             if parallelprofile
                 mpiprofile on
             end
             if suppress_errors_on_workers
                 oldwarnstate0 = warning('off','all');
             end
-            % Suppress Matlab error for nearly singular matrix
-            oldwarnstate = warning('off','MATLAB:nearlySingularMatrix');
-
-            %warning on verbose
-
+            
             myname = labindex;
             master = 1; % master process labindex
             % Create independent Random Streams with a seed on each lab
@@ -574,8 +568,7 @@ function Tree_Surv(y,X,varargin)
     %         end
             % Turn on suppressed warnings
             warning(oldwarnstate);
-            warning('on','MATLAB:illConditionedMatrix');
-            warning('on','MATLAB:singularMatrix');
+            warn_on_off('on');
             if suppress_errors_on_workers
                 warning(oldwarnstate0);
                 % warning('on','all')
@@ -598,4 +591,9 @@ function savedata(fname,output,swp_perc)
     save(fname,'output','swp_perc')
 end
 
-    
+function warn_on_off(on_off) 
+    warning(on_off,'MATLAB:integral:NonFiniteValue');
+    warning(on_off,'MATLAB:illConditionedMatrix');
+    warning(on_off,'MATLAB:singularMatrix');
+    warning(on_off,'MATLAB:nearlySingularMatrix');
+end
