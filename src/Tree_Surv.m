@@ -321,9 +321,7 @@ function Tree_Surv(y,X,varargin)
             myname = labindex;
             master = 1; % master process labindex
             % Create independent Random Streams with a seed on each lab
-            s = RandStream.create('mrg32k3a','Numstreams',m,...
-                'StreamIndices',myname,'Seed',seed);
-            RandStream.setGlobalStream(s);
+            set_seed('Numstreams', m, 'seed', seed, 'stream_index', myname);
             % Initialize root tree on each process
             mytemp = temps(myname);
             if isempty(resume)        
@@ -338,52 +336,20 @@ function Tree_Surv(y,X,varargin)
             end
             for ii=1:(burn + nmcmc)
                 % Propose a tree (with error handling)
-                goodtree = 0;
-                errcntr = 0;
-                while ~goodtree
-                    try 
-                        [Tstar,~,r,lr] = proposeTree(T,y,X,allprobs,p,mytemp,0);
-                        goodtree = 1;
-                    catch ME % If error, try again
-                        msg = getReport(ME);
-                        warning(msg);
-                    end
-                    errcntr = errcntr + 1;
-                    if errcntr > 100
-                        error('Possibly an infinite loop encountered.')
-                    end
-                end
-                if lr > log(rand)
-                    T = Tstar;
-                    naccept = naccept + 1;
-                    if r == 1
-                        n_g_accept = n_g_accept + 1;
-                        n_g_total = n_g_total + 1;
-                        %tsize = tsize + 1;
-                    elseif r == 2
-                        n_p_accept = n_p_accept + 1;
-                        n_p_total = n_p_total + 1;
-                        %tsize = tsize - 1;
-                    elseif r == 3
-                        n_c_accept = n_c_accept + 1;
-                        n_c_total = n_c_total + 1;
-                    else
-                        n_s_accept = n_s_accept + 1;
-                        n_s_total = n_s_total + 1;
-                    end
-                else
-                    if r == 1
-                        n_g_total = n_g_total + 1;
-                    elseif r == 2
-                        n_p_total = n_p_total + 1;
-                    elseif r == 3
-                        n_c_total = n_c_total + 1;
-                    else
-                        n_s_total = n_s_total + 1;
-                    end
-                end
-
-
+                [Tstar,~,r,lr] = proposeTree_noerr(T,y,X,allprobs,p,mytemp,0);
+                % accept or reject new tree
+                [newT, n_accept, n_total, n_all_accept] = ...
+                  accept_reject(lr, T, Tstar, n_accept, n_total, n_all_accept);
+                T = newT;
+                n_g_accept = n_accept(1);
+                n_p_accept = n_accept(2);
+                n_c_accept = n_accept(3);
+                n_s_accept = n_accept(4);
+                n_g_total = n_total(1);
+                n_p_total = n_total(2);
+                n_c_total = n_total(3);
+                n_s_total = n_total(4);
+                
                 if mod(ii,swapfreq) == 0
                     % Propose a switch of chains and send to all workers
                     if myname == master
@@ -596,4 +562,74 @@ function warn_on_off(on_off)
     warning(on_off,'MATLAB:illConditionedMatrix');
     warning(on_off,'MATLAB:singularMatrix');
     warning(on_off,'MATLAB:nearlySingularMatrix');
+end
+
+function set_seed(Numstreams, seed, stream_index)
+    s = RandStream.create('mrg32k3a','Numstreams',Numstreams,...
+                'StreamIndices', stream_index,'Seed',seed);
+    RandStream.setGlobalStream(s);
+end
+
+function [Tstar,prop_ratio,r,lr] = proposeTree_noerr(T,y,X,allprobs,p,temp,mset)
+    % Propose a tree (with error handling)
+    goodtree = 0;
+    errcntr = 0;
+    while ~goodtree
+        try 
+            [Tstar,prop_ratio,r,lr] = proposeTree(T,y,X,allprobs,p,temp,mset);
+            goodtree = 1;
+        catch ME % If error, try again
+            msg = getReport(ME);
+            warning(msg);
+        end
+        errcntr = errcntr + 1;
+        if errcntr > 100
+            error('Possibly an infinite loop encountered.')
+        end
+    end
+end
+
+function [newT, n_accept, n_total, n_all_accept] = ...
+    accept_reject(lr, T, Tstar, n_accept, n_total, n_all_accept)
+    n_g_accept = n_accept(1);
+    n_p_accept = n_accept(2);
+    n_c_accept = n_accept(3);
+    n_s_accept = n_accept(4);
+    n_g_total = n_total(1);
+    n_p_total = n_total(2);
+    n_c_total = n_total(3);
+    n_s_total = n_total(4);
+    
+    if lr > log(rand)
+        newT = Tstar;
+        n_all_accept = n_all_accept + 1;
+        if r == 1
+            n_g_accept = n_g_accept + 1;
+            n_g_total = n_g_total + 1;
+            %tsize = tsize + 1;
+        elseif r == 2
+            n_p_accept = n_p_accept + 1;
+            n_p_total = n_p_total + 1;
+            %tsize = tsize - 1;
+        elseif r == 3
+            n_c_accept = n_c_accept + 1;
+            n_c_total = n_c_total + 1;
+        else
+            n_s_accept = n_s_accept + 1;
+            n_s_total = n_s_total + 1;
+        end
+    else
+        newT = T;
+        if r == 1
+            n_g_total = n_g_total + 1;
+        elseif r == 2
+            n_p_total = n_p_total + 1;
+        elseif r == 3
+            n_c_total = n_c_total + 1;
+        else
+            n_s_total = n_s_total + 1;
+        end
+    end
+    n_accept = [n_g_accept, n_p_accept, n_c_accept, n_s_accept];
+    n_total = [n_g_total, n_p_total, n_c_total, n_s_total];
 end
