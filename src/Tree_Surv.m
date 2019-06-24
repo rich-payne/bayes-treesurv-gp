@@ -186,15 +186,8 @@ function Tree_Surv(y,X,varargin)
 
     naccept = 0;
     cntr_a = 0;
-    n_g_accept = 0;
-    n_p_accept = 0;
-    n_c_accept = 0;
-    n_s_accept = 0;
-    n_g_total = 0;
-    n_p_total = 0;
-    n_c_total = 0;
-    n_s_total = 0;
-    
+    n_accept = [0, 0, 0, 0]; % grow, prune, change, swap
+    n_total = [0, 0, 0, 0]; % grow, prune, change, swap
        
     % Posterior trees
     TREES = cell(nmcmc,1);
@@ -341,14 +334,6 @@ function Tree_Surv(y,X,varargin)
                 [newT, n_accept, n_total, n_all_accept] = ...
                   accept_reject(lr, T, Tstar, n_accept, n_total, n_all_accept);
                 T = newT;
-                n_g_accept = n_accept(1);
-                n_p_accept = n_accept(2);
-                n_c_accept = n_accept(3);
-                n_s_accept = n_accept(4);
-                n_g_total = n_total(1);
-                n_p_total = n_total(2);
-                n_c_total = n_total(3);
-                n_s_total = n_total(4);
                 
                 if mod(ii,swapfreq) == 0
                     % Propose a switch of chains and send to all workers
@@ -456,10 +441,10 @@ function Tree_Surv(y,X,varargin)
             end
             warning('on','MATLAB:integral:NonFiniteValue');
             perc_accept = naccept/(nmcmc + burn);
-            move_accepts = [n_g_accept/n_g_total,...
-                n_p_accept/n_p_total,...
-                n_c_accept/n_c_total,...
-                n_s_accept/n_s_total];
+            move_accepts = [n_accept(1)/n_total(1),...
+                n_accept(2)/n_total(2),...
+                n_accept(3)/n_total(3),...
+                n_accept(4)/n_total(4)];
             a_accept = cntr_a/(nmcmc + burn);
             swap_accept = swapaccepttotal/swaptotal;
             if k > 0
