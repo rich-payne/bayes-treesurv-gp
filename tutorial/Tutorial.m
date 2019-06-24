@@ -1,3 +1,6 @@
+addpath(genpath('./gpstuff'))
+addpath(genpath('./src'))
+
 % Generate a single covariate on which to partition
 rng(424)
 n = 1000;
@@ -41,6 +44,12 @@ parpool(4);
 Tree_Surv(Y,X,'nmcmc',MCMC,'burn',burn,'filepath',fpath,...
     'seed',1990,'bigK',Kval,'saveall',saveall,'swapfreq',swapfreq,...
     'nprint',nprint);
+
+% non parallel computing toolbox
+Tree_Surv(Y,X,'nmcmc',MCMC,'burn',burn,'filepath',fpath,...
+    'seed',1990,'bigK',Kval,'saveall',saveall,'swapfreq',swapfreq,...
+    'nprint',nprint, 'n_parallel_temp', 4);
+
 
 % Load data from untempered chain
 load([fpath,'mcmc_id1.mat']);

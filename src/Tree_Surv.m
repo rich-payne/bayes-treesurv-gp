@@ -188,13 +188,7 @@ function Tree_Surv(y,X,varargin)
     cntr_a = 0;
     n_accept = [0, 0, 0, 0]; % grow, prune, change, swap
     n_total = [0, 0, 0, 0]; % grow, prune, change, swap
-       
-    % Posterior trees
-    TREES = cell(nmcmc,1);
-    treesize = zeros(nmcmc,1);
-    %As = zeros(nmcmc,1);
-    LLIKE = zeros(nmcmc,1);
-    lprior = zeros(nmcmc,1);
+ 
     swapaccepttotal = 0;
     swaptotal = 0;
     swapaccepttotal_global = 0;
@@ -301,6 +295,12 @@ function Tree_Surv(y,X,varargin)
     end
        
     if pool_exists
+        % Posterior trees
+        TREES = cell(nmcmc,1);
+        treesize = zeros(nmcmc,1);
+        %As = zeros(nmcmc,1);
+        LLIKE = zeros(nmcmc,1);
+        lprior = zeros(nmcmc,1);
         spmd(m)
             % Turn off warnings
             warn_on_off('off');
@@ -314,7 +314,7 @@ function Tree_Surv(y,X,varargin)
             myname = labindex;
             master = 1; % master process labindex
             % Create independent Random Streams with a seed on each lab
-            set_seed('Numstreams', m, 'seed', seed, 'stream_index', myname);
+            set_seed(m, seed, myname);
             % Initialize root tree on each process
             mytemp = temps(myname);
             if isempty(resume)        
@@ -329,10 +329,10 @@ function Tree_Surv(y,X,varargin)
             end
             for ii=1:(burn + nmcmc)
                 % Propose a tree (with error handling)
-                [Tstar,~,~,lr] = proposeTree_noerr(T,y,X,allprobs,p,mytemp,0);
+                [Tstar,~,r,lr] = proposeTree_noerr(T,y,X,allprobs,p,mytemp,0);
                 % accept or reject new tree
                 [newT, n_accept, n_total, n_all_accept] = ...
-                  accept_reject(lr, T, Tstar, n_accept, n_total, n_all_accept);
+                  accept_reject(lr, T, Tstar, n_accept, n_total, n_all_accept, r);
                 T = newT;
                 
                 if mod(ii,swapfreq) == 0
@@ -533,136 +533,103 @@ function Tree_Surv(y,X,varargin)
             end
         end
     else % if no parallel pool exists
+        % Posterior trees
+        TREES = cell(nmcmc,m);
+        treesize = zeros(nmcmc,m);
+        %As = zeros(nmcmc,1);
+        LLIKE = zeros(nmcmc,m);
+        lprior = zeros(nmcmc,m);
         % Turn off warnings
         warn_on_off('off');
         % Create independent Random Streams with a seed on each lab
-        set_seed('Numstreams', 1, 'seed', seed, 'stream_index', 1);
+        set_seed(1, seed, 1);
         % Initialize root tree on each process
         T_all = cell(n_parallel_temp);
         for ii = 1:n_parallel_temp
             if isempty(resume)        
-                T_all(ii) = Tree(y,X,leafmin,gamma,beta,...
-                    EB,bigK,nugget,eps,temp(ii));
+                T_all{ii} = Tree(y,X,leafmin,gamma,beta,...
+                    EB,bigK,nugget,eps,temps(ii));
             else
-                T_all(ii) = resumeTrees{ii};
-                T_all(ii).Temp = temp(ii);
+                T_all{ii} = resumeTrees{ii};
+                T_all{ii}.Temp = temps(ii);
             end
         end
+        N_ACCEPT = zeros(n_parallel_temp, 4);
+        N_TOTAL = N_ACCEPT;
+        N_ALL_ACCEPT = zeros(n_parallel_temp, 1);
+        swaptotal = zeros(1, n_parallel_temp);
+        swapaccepttotal = swaptotal;
         disp('Starting MCMC...')
         for ii=1:(burn + nmcmc)
-            % Propose a tree (with error handling)
-            [Tstar,~,~,lr] = proposeTree_noerr(T,y,X,allprobs,p,mytemp,0);
-            % accept or reject new tree
-            [newT, n_accept, n_total, n_all_accept] = ...
-              accept_reject(lr, T, Tstar, n_accept, n_total, n_all_accept);
-            T = newT;
-
-            if mod(ii,swapfreq) == 0
-                % Propose a switch of chains and send to all workers
-                if myname == master
-                    swapind = zeros(1,2);
-                    swapind(1) = randsample(m-1,1);
-                    swapind(2) = swapind(1) + 1;
-                    swapind = labBroadcast(master,swapind);
-                else
-                    swapind = labBroadcast(master); 
-                end
-                % Send proposed swap to master
-                if myname == swapind(1) && myname ~= master
-                    labSend(T,master,1);
-                    swaptotal = swaptotal + 1;
-                end
-                if myname == master
-                    if myname ~= swapind(1)
-                        Tstarswap1 = labReceive(swapind(1),1);
-                    else
-                        Tstarswap1 = T;
-                        swaptotal = swaptotal + 1;
-                    end
-                end
-                if myname == swapind(2) && myname ~= master
-                    labSend(T,master,2);
-                    swaptotal = swaptotal + 1;
-                end
-                if myname == master
-                    if myname ~= swapind(2)
-                        Tstarswap2 = labReceive(swapind(2),2);
-                    else
-                        Tstarswap2 = T;
-                        swaptotal = swaptotal + 1;
-                    end
-                end
-                if myname == master
-                    swaptotal_global = swaptotal_global + 1;
-                    lrswap = (Tstarswap2.Temp * Tstarswap1.Lliketree + Tstarswap1.Prior) + ...
-                        (Tstarswap1.Temp * Tstarswap2.Lliketree + Tstarswap2.Prior) - ...
-                        (Tstarswap1.Temp * Tstarswap1.Lliketree + Tstarswap1.Prior) - ...
-                        (Tstarswap2.Temp * Tstarswap2.Lliketree + Tstarswap2.Prior);
-                    if ~isfinite(lrswap)
-                        error('Non-finite swap likelihood ratio.')
-                    end
-                    if lrswap > log(rand) % Accept
-                        swapaccept = 1;
-                    else
-                        swapaccept = 0;
-                    end
-                    swapaccepttotal_global = swapaccepttotal_global + swapaccept;
-                    swapaccept = labBroadcast(master,swapaccept);
-                else
-                    swapaccept = labBroadcast(master);
-                end
-                if swapaccept
-                    if myname == master
-                        if myname ~= swapind(1)
-                            labSend(Tstarswap2,swapind(1))
-                        else
-                            T = Tstarswap2;
-                            swapaccepttotal = swapaccepttotal + 1;
-                        end
-                        if myname ~= swapind(2)
-                            labSend(Tstarswap1,swapind(2))
-                        else
-                            T = Tstarswap1;
-                            swapaccepttotal = swapaccepttotal + 1;
-                        end
-                    elseif any(myname == swapind)
-                        swapaccepttotal = swapaccepttotal + 1;
-                        T = labReceive(master);
-                    end
-                    if any(myname == swapind) % Update temperature on Tree
-                        T.Temp = mytemp;
-                    end
-                end
+            for jj = 1:n_parallel_temp
+                n_accept = [0, 0, 0, 0];
+                n_total = [0, 0, 0, 0];
+                n_all_accept = 0;
+                % Propose a tree (with error handling)
+                [Tstar,~,r,lr] = proposeTree_noerr(T_all{jj},y,X,allprobs,p,temps(jj),0);
+                % accept or reject new tree
+                [newT, n_accept, n_total, n_all_accept] = ...
+                accept_reject(lr, T_all{jj}, Tstar, n_accept, n_total, n_all_accept, r);
+                T_all{jj} = newT;
+                N_ACCEPT(jj, :) = N_ACCEPT(jj, :) + n_accept;
+                N_TOTAL(jj, :) = N_TOTAL(jj, :) + n_total;
+                N_ALL_ACCEPT(jj) = N_ALL_ACCEPT(jj) + n_all_accept;
             end
 
-            %if myname == master % Print progress
-                if mod(ii,nprint) == 0
-                    disp(['i = ',num2str(ii),', ID = ',num2str(myname),', llike = ',num2str(T.Lliketree),...
-                        ', accept = ',num2str(naccept/ii),...
-                        ', swapaccept = ',num2str(swapaccepttotal),'/',num2str(swaptotal),...
-                        ', Size = ',num2str(T.Ntermnodes),...
-                        ', temp = ',num2str(T.Temp)]);
-                    if myname == master
-                        disp(' ');
-                    end
+            if mod(ii, swapfreq) == 0
+                % Propose a switch of chains
+                swapind = zeros(1,2);
+                swapind(1) = randsample(n_parallel_temp - 1, 1);
+                swapind(2) = swapind(1) + 1;
+                swaptotal_global = swaptotal_global + 1;
+                lrswap = (T_all{swapind(2)}.Temp * T_all{swapind(1)}.Lliketree + T_all{swapind(1)}.Prior) + ...
+                    (T_all{swapind(1)}.Temp * T_all{swapind(2)}.Lliketree + T_all{swapind(2)}.Prior) - ...
+                    (T_all{swapind(1)}.Temp * T_all{swapind(1)}.Lliketree + T_all{swapind(1)}.Prior) - ...
+                    (T_all{swapind(2)}.Temp * T_all{swapind(2)}.Lliketree + T_all{swapind(2)}.Prior);
+                if ~isfinite(lrswap)
+                    error('Non-finite swap likelihood ratio.')
                 end
-            %end
+                if lrswap > log(rand) % Accept
+                    swapaccept = 1;
+                    T_tmp = T_all{swapind(1)};
+                    temp_tmp1 = T_all{swapind(1)}.Temp;
+                    temp_tmp2 = T_all{swapind(2)}.Temp;
+                    T_all{swapind(1)} = T_all{swapind(2)};
+                    T_all{swapind(1)}.Temp = temp_tmp1;
+                    T_all{swapind(2)} = T_tmp;
+                    T_all{swapind(2)}.Temp = temp_tmp2;
+                else
+                    swapaccept = 0;
+                end
+                swapaccepttotal_global = swapaccepttotal_global + swapaccept;
+                swapaccepttotal(swapind(1)) = swapaccepttotal(swapind(1)) + swapaccept;
+                swapaccepttotal(swapind(2)) = swapaccepttotal(swapind(2)) + swapaccept;
+                swaptotal(swapind(1)) = swaptotal(swapind(1)) + 1;
+                swaptotal(swapind(2)) = swaptotal(swapind(2)) + 1;
+            end
 
+            if mod(ii, nprint) == 0
+                for jj = 1:n_parallel_temp
+                    disp(['i = ',num2str(ii),', ID = ',num2str(jj),...
+                        ', llike = ',num2str(T_all{jj}.Lliketree),...
+                        ', accept = ',num2str(100 * N_ACCEPT(jj, :)/ii, '%.0f, '),...
+                        ' swapaccept = ',num2str(swapaccepttotal(jj)),'/',num2str(swaptotal(jj)),...
+                        ', Size = ',num2str(T_all{jj}.Ntermnodes),...
+                        ', temp = ',num2str(T_all{jj}.Temp)]);
+                end
+            end
+            
             % Record Values       
             if ii > burn
-                TREES{ii - burn} = thin_tree(T);
-                treesize(ii - burn) = T.Ntermnodes;
-                LLIKE(ii - burn) = T.Lliketree;
-                lprior(ii - burn) = T.Prior;
+                for jj = 1:n_parallel_temp
+                    TREES{ii - burn, jj} = thin_tree(T_all{jj});
+                    treesize(ii - burn, jj) = T_all{jj}.Ntermnodes;
+                    LLIKE(ii - burn, jj) = T_all{jj}.Lliketree;
+                    lprior(ii - burn, jj) = T_all{jj}.Prior;
+                end
             end
-
-            % Save values
-            %if mod(ii,save_every) == 0
-
-
         end
-        warning('on','MATLAB:integral:NonFiniteValue');
-        perc_accept = naccept/(nmcmc + burn);
+        perc_accept = N_ACCEPT/(nmcmc + burn);
         move_accepts = [n_accept(1)/n_total(1),...
             n_accept(2)/n_total(2),...
             n_accept(3)/n_total(3),...
@@ -670,89 +637,38 @@ function Tree_Surv(y,X,varargin)
         a_accept = cntr_a/(nmcmc + burn);
         swap_accept = swapaccepttotal/swaptotal;
         if k > 0
-            C = unique(sort(LLIKE,'descend'),'rows','stable');
+            C = unique(sort(LLIKE(:, 1),'descend'),'rows','stable');
             if length(C) < k
                 if ~saveall
-                    if myname == master
-                        % This note is only generated by the master.  Other
-                        % workers will not display the message.
-                        disp('NOTE: Number of unique trees is less than k. Less than k trees returned.')
-                    end
+                    disp('NOTE: Number of unique trees is less than k. Less than k trees returned.')
                 end
                 k = length(C);
             end
             Treesub = cell(k,1);
             for mm=1:k
-                I = find(C(mm) == LLIKE);
-                Treesub{mm} = TREES{I(1)};
+                I = find(C(mm) == LLIKE(:, 1));
+                Treesub{mm} = TREES{I(1), 1};
             end
             TREES = Treesub;
         end
-        output = struct('Trees',{TREES},'llike',LLIKE,...
-            'lprior',lprior,...
-            'acceptance',perc_accept,...
-            'treesize',treesize,'move_accepts',move_accepts,...
-            'swap_accept',swap_accept,'a_accept',a_accept,...
-            'n_accepted',[n_g_accept,n_p_accept,n_c_accept,n_s_accept],...
-            'n_proposed',[n_g_total,n_p_total,n_c_total,n_s_total]);
-        % Clear memory
-        TREES = [];
+        
         % Save output sequentially
-        swap_percent_global = swapaccepttotal_global/swaptotal_global;
-        fname = strcat(filepath,'mcmc_id',num2str(myname),'.mat');
-        nlabs = numlabs;
-        if myname == master
-            disp(strcat(['Saving data on worker ',num2str(myname),'.']));
-            savedata(fname,output,swap_percent_global);
-            output = []; % clear memory
-            if saveall
-                labSend(1,master + 1);
-            else
-                labSend(0,master + 1);
-            end
-        else
-            tosave = labReceive(myname - 1);
-            if tosave
-                disp(strcat(['Saving data on worker ',num2str(myname),'.']));
-                savedata(fname,output,swap_percent_global);
-                output = []; % clear memory
-                if myname < nlabs
-                    labSend(1,myname + 1);
-                end
-            elseif myname < nlabs
-                labSend(0,myname + 1);
-            end
-        end
-
-%         if saveall
-%             savenames = 1:m;
-%             % save using the psave button
-%             % psave('mcmc_out');
-%         else
-%             savenames = master;
-%         end
-%         if any(myname == savenames)
-%             fname = strcat(filepath,'mcmc_id',num2str(myname),'.mat');
-%             swap_percent_global = swapaccepttotal_global/swaptotal_global;
-%             %strt = tic;
-%             savedata(fname,output,swap_percent_global);
-%             %stp = toc(strt);
-%             %savetime = stp - strt;
-%         end
-        % Turn on suppressed warnings
-        warning(oldwarnstate);
-        warn_on_off('on');
-        if suppress_errors_on_workers
-            warning(oldwarnstate0);
-            % warning('on','all')
-        end
-        if parallelprofile
-            mpiprofile viewer
-            mpiprofile off
-        end
-        if myname == master
+        for jj = 1:n_parallel_temp
+            output = struct('Trees',{TREES(:, jj)},'llike',LLIKE(:, jj),...
+                'lprior',lprior(:, jj),...
+                'acceptance',perc_accept(jj, :),...
+                'treesize',treesize(:, jj),'move_accepts',move_accepts,...
+                'swap_accept',swap_accept,'a_accept',a_accept,...
+                'n_accepted',[N_ACCEPT(jj, 1),N_ACCEPT(jj, 2),N_ACCEPT(jj, 3),N_ACCEPT(jj, 4)],...
+                'n_proposed',[N_TOTAL(jj, 1),N_TOTAL(jj, 2),N_TOTAL(jj, 3),N_TOTAL(jj, 4)]);
+            swap_percent_global = swapaccepttotal_global/swaptotal_global;
+            fname = strcat(filepath,'mcmc_id',num2str(jj),'.mat');
+            %nlabs = numlabs;
+            disp(strcat(['Saving data on worker ',num2str(jj),'.']));
+            savedata(fname, output, swap_percent_global);
             disp(strcat(['Finished: ', fname]))
         end
+        warn_on_off('on');
     end
 end
 
@@ -793,7 +709,7 @@ function [Tstar,prop_ratio,r,lr] = proposeTree_noerr(T,y,X,allprobs,p,temp,mset)
 end
 
 function [newT, n_accept, n_total, n_all_accept] = ...
-    accept_reject(lr, T, Tstar, n_accept, n_total, n_all_accept)
+    accept_reject(lr, T, Tstar, n_accept, n_total, n_all_accept, r)
     n_g_accept = n_accept(1);
     n_p_accept = n_accept(2);
     n_c_accept = n_accept(3);
