@@ -1400,5 +1400,20 @@ classdef Tree
                 end
             end
         end
+        
+        % count the number of times each variable is used to split
+        function var_cnts = var_count(obj, X)
+            n_vars = size(X, 2);
+            var_cnts = zeros(n_vars, 1);
+            for ii = 1:size(obj.Allnodes, 2)
+                thenode = obj.Allnodes{ii};
+                if ~isempty(thenode.Rule) % if not terminal node
+                    ind = thenode.Rule{1};
+                    var_cnts(ind) = var_cnts(ind) + 1;
+                end
+            end
+        end
     end             
 end
+
+
