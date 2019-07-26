@@ -128,23 +128,12 @@ classdef Nodes
             end % else leave rule empty
         end
         
-        
-        
-        % Calculate the log-likelihood of the node
-        % obj: Object of class 'Nodes' for which the likelihood will be
-        %      calculated
-        % thetree: The tree to which the node 'obj' belongs
-        % y: the dependent variable
-        function out = loglikefunc(obj,thetree,y)
-            out = obj;
-            ypart = y(obj.Xind,:);
-            % use parent values of a and theta as starting points
+        function [marg_y, res] = loglikefunc_custom(obj,thetree,ypart)
             pid = obj.Parent;
             % Randomly choose to use parent values or default
             whichstarts = rand;
-            
             if ~isempty(pid) && (whichstarts < .5)
-                pind = nodeind(thetree,pid);
+                pind = nodeind(thetree, pid);
                 pnode = thetree.Allnodes{pind};
                 tau_start = pnode.tau;
                 l_start = pnode.l;
@@ -166,6 +155,17 @@ classdef Nodes
                         tau_start,l_start,thetree.nugget,thetree.EB);
                 end
             end
+        end
+        
+        % Calculate the log-likelihood of the node
+        % obj: Object of class 'Nodes' for which the likelihood will be
+        %      calculated
+        % thetree: The tree to which the node 'obj' belongs
+        % y: the dependent variable
+        function out = loglikefunc(obj,thetree,y)
+            out = obj;
+            ypart = y(obj.Xind,:);
+            [marg_y, res] = loglikefunc_custom(obj,thetree,ypart);
             out.tau = res.tau;
             out.l = res.l;
             out.Llike = marg_y;
