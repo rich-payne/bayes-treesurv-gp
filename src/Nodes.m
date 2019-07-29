@@ -36,6 +36,7 @@ classdef Nodes
         Updatesplits % 0 if no update of the splits is necessary, 1 if needed
         tau % EB scale hyperparameters 
         l % EB length hyperparamter
+        p_predictive
     end
     methods
         % Constructor
@@ -174,16 +175,23 @@ classdef Nodes
                     ypart = y(intersect(obj.Xind, thetree.trt_ind{ii}), :);
                     if length(ypart) < thetree.Leafmin && ~thetree.relax % TODO improve efficiency
                         out.Llike = marg_y_prognostic;
+                        out.p_predictive = NaN;
                         return;
                     elseif ~isempty(ypart)
                         [marg_y, ~] = loglikefunc_custom(obj,thetree,ypart);
                         marg_y_predictive = marg_y_predictive + marg_y;
                     end
                 end
-                out.Llike = log(thetree.p_prognostic) + marg_y_prognostic + ...
-                    log(1 - thetree.p_prognostic) + marg_y_predictive;
+                marg_prognostic = log(thetree.p_prognostic) + marg_y_prognostic;
+                marg_predictive = log(1 - thetree.p_prognostic) + marg_y_predictive;
+                a = max([marg_prognostic, marg_predictive]);
+                % log-sum-exp trick
+                llike = a + log(sum([marg_prognostic + marg_predictive] - a));
+                out.Llike = llike;
+                out.p_predictive = exp(marg_predictive - llike);
             else
                 out.Llike = marg_y_prognostic;
+                out.p_predictive = NaN;
             end
         end
         
