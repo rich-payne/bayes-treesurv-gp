@@ -53,8 +53,15 @@
 %    p: the probability of performing an incremental change step on a
 %       continuous variable rather than drawing from the prior. Default is
 %       .75.
+%    p_prognostic:  The probability of estimating survival ignoring
+%                   treatment assignments at a terminal node.
+%                   
 %    parallelprofile: If 1, parallel profiling is performed to determine code
 %                  efficiency.  Default is 0.
+%    relax: Default 0, indicating that trees with treatment as a possile
+%            covariate require Leafmin observations in each treatment
+%            group.  If 1, a tree must have a total of Leafmin observations
+%            at each terminal node, regardless of treatment group.
 %    resume: A string containing the filepath to the last MCMC run from which
 %      the user would like the MCMC to continue from.
 %    saveall: If 1, the results of all tempered chains are saved as output.
@@ -88,8 +95,9 @@ function Tree_Surv(y,X,varargin)
     addParameter(ip,'hottemp',.1)
     addParameter(ip,'nprint',100);
     addParameter(ip,'n_parallel_temp',4);
-    addParameter(ip, 'p_prognostic', .5);
+    addParameter(ip,'p_prognostic', .5);
     addParameter(ip,'resume',[]);
+    addParameter(ip, 'relax', 1);
     addParameter(ip,'saveall',0);
     %addParameter(ip,'save_every',5000);
     addParameter(ip,'swapfreq',1);
@@ -117,6 +125,7 @@ function Tree_Surv(y,X,varargin)
     hottemp = ip.Results.hottemp;
     nprint = ip.Results.nprint;
     n_parallel_temp = ip.Results.n_parallel_temp;
+    relax = ip.Results.relax;
     resume = ip.Results.resume;
     saveall = ip.Results.saveall;
     %save_every = ip.Results.save_every;
@@ -324,7 +333,7 @@ function Tree_Surv(y,X,varargin)
             mytemp = temps(myname);
             if isempty(resume)        
                 T = Tree(y,X,leafmin,gamma,beta,...
-                    EB,bigK,nugget,eps,mytemp,p_prognostic);
+                    EB,bigK,nugget,eps,mytemp,p_prognostic,relax);
             else
                 T = resumeTrees{myname};
                 T.Temp = mytemp;
@@ -553,7 +562,7 @@ function Tree_Surv(y,X,varargin)
         for ii = 1:n_parallel_temp
             if isempty(resume)        
                 T_all{ii} = Tree(y,X,leafmin,gamma,beta,...
-                    EB,bigK,nugget,eps,temps(ii),p_prognostic);
+                    EB,bigK,nugget,eps,temps(ii),p_prognostic, relax);
             else
                 T_all{ii} = resumeTrees{ii};
                 T_all{ii}.Temp = temps(ii);

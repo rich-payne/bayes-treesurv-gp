@@ -172,12 +172,13 @@ classdef Nodes
                 marg_y_predictive = 0;
                 for ii = 1:length(thetree.trt_ind)
                     ypart = y(intersect(obj.Xind, thetree.trt_ind{ii}), :);
-                    if length(ypart) < thetree.Leafmin % TODO improve efficiency
+                    if length(ypart) < thetree.Leafmin && ~thetree.relax % TODO improve efficiency
                         out.Llike = marg_y_prognostic;
                         return;
+                    elseif ~isempty(ypart)
+                        [marg_y, ~] = loglikefunc_custom(obj,thetree,ypart);
+                        marg_y_predictive = marg_y_predictive + marg_y;
                     end
-                    [marg_y, ~] = loglikefunc_custom(obj,thetree,ypart);
-                    marg_y_predictive = marg_y_predictive + marg_y;
                 end
                 out.Llike = log(thetree.p_prognostic) + marg_y_prognostic + ...
                     log(1 - thetree.p_prognostic) + marg_y_predictive;

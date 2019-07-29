@@ -36,6 +36,7 @@ classdef Tree
         Prior % the log of the prior
         Temp % The inverse-temperature of the tree (for parallel tempering)
         Ntermnodes % the number of terminal nodes/leaves       
+        relax % whether to relax assumption that each trt needs Leafmin obs
         %
         EB
         K
@@ -51,7 +52,7 @@ classdef Tree
         % beta: prior hyperparameter
         % temp: Inverse temperature of the tree
         function out = Tree(y,X,Leafmin,gamma,beta,...
-                EB,K,nugget,eps,temp,p_prognostic)
+                EB,K,nugget,eps,temp,p_prognostic, relax)
             if(~isempty(EB))
                 out.EB = EB;
             else
@@ -73,6 +74,7 @@ classdef Tree
                 error('Must have nonempty "eps"');
             end
             out.p_prognostic = p_prognostic;
+            out.relax = relax;
                 
            
             % Create root node
