@@ -165,10 +165,25 @@ classdef Nodes
         function out = loglikefunc(obj,thetree,y)
             out = obj;
             ypart = y(obj.Xind,:);
-            [marg_y, res] = loglikefunc_custom(obj,thetree,ypart);
-            out.tau = res.tau;
-            out.l = res.l;
-            out.Llike = marg_y;
+            [marg_y_prognostic, res_prognostic] = loglikefunc_custom(obj,thetree,ypart);
+            out.tau = res_prognostic.tau;
+            out.l = res_prognostic.l;
+            if length(thetree.trt_ind) > 1
+                marg_y_predictive = 0;
+                for ii = 1:length(thetree.trt_ind)
+                    ypart = y(intersect(obj.Xind, thetree.trt_ind{ii}), :);
+                    if length(ypart) < thetree.Leafmin % TODO improve efficiency
+                        out.Llike = marg_y_prognostic;
+                        return;
+                    end
+                    [marg_y, ~] = loglikefunc_custom(obj,thetree,ypart);
+                    marg_y_predictive = marg_y_predictive + marg_y;
+                end
+                out.Llike = log(thetree.p_prognostic) + marg_y_prognostic + ...
+                    log(1 - thetree.p_prognostic) + marg_y_predictive;
+            else
+                out.Llike = marg_y_prognostic;
+            end
         end
         
         % Obtain possible splitting values for a node

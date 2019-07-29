@@ -88,6 +88,7 @@ function Tree_Surv(y,X,varargin)
     addParameter(ip,'hottemp',.1)
     addParameter(ip,'nprint',100);
     addParameter(ip,'n_parallel_temp',4);
+    addParameter(ip, 'p_prognostic', .5);
     addParameter(ip,'resume',[]);
     addParameter(ip,'saveall',0);
     %addParameter(ip,'save_every',5000);
@@ -111,6 +112,7 @@ function Tree_Surv(y,X,varargin)
     k = ip.Results.k;
     bigK = ip.Results.bigK;
     p = ip.Results.p;
+    p_prognostic = ip.Results.p_prognostic;
     parallelprofile = ip.Results.parallelprofile;
     hottemp = ip.Results.hottemp;
     nprint = ip.Results.nprint;
@@ -154,6 +156,9 @@ function Tree_Surv(y,X,varargin)
     end
     if mod(swapfreq,1) ~= 0 || swapfreq < 1
         error('swapfreq must be an integer >= 1.')
+    end
+    if p_prognostic < 0 || p_prognostic > 1
+        error('p_prognostic must be between 0 and 1')
     end
     % Add slash if necessary
     if ~strcmp(filepath(end),'/')
@@ -319,7 +324,7 @@ function Tree_Surv(y,X,varargin)
             mytemp = temps(myname);
             if isempty(resume)        
                 T = Tree(y,X,leafmin,gamma,beta,...
-                    EB,bigK,nugget,eps,mytemp);
+                    EB,bigK,nugget,eps,mytemp,p_prognostic);
             else
                 T = resumeTrees{myname};
                 T.Temp = mytemp;
@@ -548,7 +553,7 @@ function Tree_Surv(y,X,varargin)
         for ii = 1:n_parallel_temp
             if isempty(resume)        
                 T_all{ii} = Tree(y,X,leafmin,gamma,beta,...
-                    EB,bigK,nugget,eps,temps(ii));
+                    EB,bigK,nugget,eps,temps(ii),p_prognostic);
             else
                 T_all{ii} = resumeTrees{ii};
                 T_all{ii}.Temp = temps(ii);

@@ -23,6 +23,9 @@ classdef Tree
         NodeIds % A vector with the Ids of the nodes in Allnodes 
                 %   (not necessarily in the same order)
         Xclass % The class of each column
+        trt_ind % cell array containing indices of each treatment
+        p_prognostic % the probability the data at a terminal node for 
+                     % treatments do not have a treatment effect
         Smallnodes % 0 if terminal nodes have at least 'Leafmin' observations,
                    % otherwise 1.
         Varnames % Variable names of X
@@ -48,7 +51,7 @@ classdef Tree
         % beta: prior hyperparameter
         % temp: Inverse temperature of the tree
         function out = Tree(y,X,Leafmin,gamma,beta,...
-                EB,K,nugget,eps,temp)
+                EB,K,nugget,eps,temp,p_prognostic)
             if(~isempty(EB))
                 out.EB = EB;
             else
@@ -69,6 +72,8 @@ classdef Tree
             else
                 error('Must have nonempty "eps"');
             end
+            out.p_prognostic = p_prognostic;
+                
            
             % Create root node
             rootnode = Nodes(0,[],[],[],[],1:size(X,1),0);
@@ -103,6 +108,22 @@ classdef Tree
             else
                 error('Covariate matrix must be of class "table"');
             end
+            
+            % Assume 
+            trt_exists = ismember('treatment', X.Properties.VariableNames);
+            if trt_exists
+                % if a cell
+                unique_trts = unique(X.treatment);
+                n_trts = size(unique_trts, 1);
+                trt_ind = cell(n_trts, 1);
+                for ii = 1:n_trts
+                    trt_ind{ii} = find(strcmp(X.treatment, unique_trts{ii}));
+                end
+            else
+                trt_ind = cell({[1:size(X, 1)]'});
+            end
+            out.trt_ind = trt_ind;
+            
             
             % Calculate log-likelihood of root node
             out = llike(out,0,y);
