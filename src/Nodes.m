@@ -36,7 +36,7 @@ classdef Nodes
         Updatesplits % 0 if no update of the splits is necessary, 1 if needed
         tau % EB scale hyperparameters 
         l % EB length hyperparamter
-        p_predictive
+        p_trt_effect
     end
     methods
         % Constructor
@@ -166,32 +166,40 @@ classdef Nodes
         function out = loglikefunc(obj,thetree,y)
             out = obj;
             ypart = y(obj.Xind,:);
-            [marg_y_prognostic, res_prognostic] = loglikefunc_custom(obj,thetree,ypart);
-            out.tau = res_prognostic.tau;
-            out.l = res_prognostic.l;
+            [marg_y_no_trt, res_no_trt] = loglikefunc_custom(obj,thetree,ypart);
+            out.tau = res_no_trt.tau;
+            out.l = res_no_trt.l;
             if length(thetree.trt_ind) > 1
-                marg_y_predictive = 0;
+                % check if we need to do anything
+                marg_y_trt = 0;
                 for ii = 1:length(thetree.trt_ind)
                     ypart = y(intersect(obj.Xind, thetree.trt_ind{ii}), :);
                     if length(ypart) < thetree.Leafmin && ~thetree.relax % TODO improve efficiency
-                        out.Llike = marg_y_prognostic;
-                        out.p_predictive = NaN;
+                        out.Llike = marg_y_no_trt;
+                        out.p_trt_effect = NaN;
                         return;
                     elseif ~isempty(ypart)
                         [marg_y, ~] = loglikefunc_custom(obj,thetree,ypart);
-                        marg_y_predictive = marg_y_predictive + marg_y;
+                        marg_y_trt = marg_y_trt + marg_y;
                     end
                 end
-                marg_prognostic = log(thetree.p_prognostic) + marg_y_prognostic;
-                marg_predictive = log(1 - thetree.p_prognostic) + marg_y_predictive;
-                a = max([marg_prognostic, marg_predictive]);
+                marg_trt = log(thetree.p_prior_trt_effect) + marg_y_trt;
+                marg_no_trt = log(1 - thetree.p_prior_trt_effect) + marg_y_no_trt;
+                a = max([marg_trt, marg_no_trt]);
                 % log-sum-exp trick
-                llike = a + log(sum([marg_prognostic + marg_predictive] - a));
+                llike = a + log(sum(exp([marg_trt, marg_no_trt] - a)));
+                if ~isfinite(llike)
+                    llike
+                    marg_trt
+                    marg_no_trt
+                    a
+                    p_trt_effect = exp(marg_trt - llike)
+                end
                 out.Llike = llike;
-                out.p_predictive = exp(marg_predictive - llike);
+                out.p_trt_effect = exp(marg_trt - llike);
             else
-                out.Llike = marg_y_prognostic;
-                out.p_predictive = NaN;
+                out.Llike = marg_y_no_trt;
+                out.p_trt_effect = NaN;
             end
         end
         

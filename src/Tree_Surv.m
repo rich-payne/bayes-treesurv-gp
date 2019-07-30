@@ -53,8 +53,9 @@
 %    p: the probability of performing an incremental change step on a
 %       continuous variable rather than drawing from the prior. Default is
 %       .75.
-%    p_prognostic:  The probability of estimating survival ignoring
-%                   treatment assignments at a terminal node.
+%    p_prior_trt_effect:  The prior probability of estimating each 
+%                         treatment group separately.  That is, the prior
+%                         probability there is a treatment effect.
 %                   
 %    parallelprofile: If 1, parallel profiling is performed to determine code
 %                  efficiency.  Default is 0.
@@ -95,7 +96,7 @@ function Tree_Surv(y,X,varargin)
     addParameter(ip,'hottemp',.1)
     addParameter(ip,'nprint',100);
     addParameter(ip,'n_parallel_temp',4);
-    addParameter(ip,'p_prognostic', .5);
+    addParameter(ip,'p_prior_trt_effect', .5);
     addParameter(ip,'resume',[]);
     addParameter(ip, 'relax', 1);
     addParameter(ip,'saveall',0);
@@ -111,7 +112,7 @@ function Tree_Surv(y,X,varargin)
    
     parse(ip,y,X,varargin{:});
     y = ip.Results.y;
-    X = ip.Results.X;
+    X = ip.Results.X;  
     nmcmc = ip.Results.nmcmc;
     burn = ip.Results.burn;
     leafmin = ip.Results.leafmin;
@@ -120,7 +121,7 @@ function Tree_Surv(y,X,varargin)
     k = ip.Results.k;
     bigK = ip.Results.bigK;
     p = ip.Results.p;
-    p_prognostic = ip.Results.p_prognostic;
+    p_prior_trt_effect = ip.Results.p_prior_trt_effect;
     parallelprofile = ip.Results.parallelprofile;
     hottemp = ip.Results.hottemp;
     nprint = ip.Results.nprint;
@@ -137,6 +138,15 @@ function Tree_Surv(y,X,varargin)
     eps = ip.Results.eps;
     nugget= ip.Results.nugget;
     % parameters
+    
+    % split treatment off if necessary
+    trt_exists = ismember('treatment', X.Properties.VariableNames);
+    if trt_exists
+        treatment = X.treatment;
+        X.treatment = [];
+    else
+        treatment = [];
+    end
     
     % Validation of values
     if size(y,1) ~= size(X,1)
@@ -166,8 +176,8 @@ function Tree_Surv(y,X,varargin)
     if mod(swapfreq,1) ~= 0 || swapfreq < 1
         error('swapfreq must be an integer >= 1.')
     end
-    if p_prognostic < 0 || p_prognostic > 1
-        error('p_prognostic must be between 0 and 1')
+    if p_prior_trt_effect < 0 || p_prior_trt_effect > 1
+        error('p_prior_trt_effect must be between 0 and 1')
     end
     % Add slash if necessary
     if ~strcmp(filepath(end),'/')
@@ -333,7 +343,7 @@ function Tree_Surv(y,X,varargin)
             mytemp = temps(myname);
             if isempty(resume)        
                 T = Tree(y,X,leafmin,gamma,beta,...
-                    EB,bigK,nugget,eps,mytemp,p_prognostic,relax);
+                    EB,bigK,nugget,eps,mytemp,p_prior_trt_effect,relax, treatment);
             else
                 T = resumeTrees{myname};
                 T.Temp = mytemp;
@@ -562,7 +572,7 @@ function Tree_Surv(y,X,varargin)
         for ii = 1:n_parallel_temp
             if isempty(resume)        
                 T_all{ii} = Tree(y,X,leafmin,gamma,beta,...
-                    EB,bigK,nugget,eps,temps(ii),p_prognostic, relax);
+                    EB,bigK,nugget,eps,temps(ii),p_prior_trt_effect, relax, treatment);
             else
                 T_all{ii} = resumeTrees{ii};
                 T_all{ii}.Temp = temps(ii);
