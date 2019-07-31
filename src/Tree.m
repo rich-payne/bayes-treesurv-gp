@@ -1123,6 +1123,45 @@ classdef Tree
         end
 
         % Graphs
+        % obj is the tree
+        % vname is the variable name
+        % X is the vector of covariates
+        function predictive_plot(obj, vname, X)
+            term_ind = termnodes(obj);
+            max_bounds = [min(X{:, vname}), max(X{:, vname})];
+            pts = zeros(length(term_ind), 3);
+            for ii = 1:length(term_ind)
+                [bounds, p_trt] = get_node_bounds(obj, term_ind(ii), vname, max_bounds);
+                b_width = (bounds(2) - bounds(1)) / 2;
+                b_center = (bounds(2) + bounds(1)) / 2;
+                pts(ii, :) = [b_center, b_width, p_trt];
+            end
+            figure()
+            errorbar(pts(:, 1), pts(:, 3), pts(:, 2), 'horizontal', 'o');
+            ylim([-.05, 1.05]);
+        end
+        
+        function [bounds, p_trt] = get_node_bounds(obj, node_ind, vname, bounds)
+            p_trt = obj.Allnodes{node_ind}.p_trt_effect;
+            parent_ind = nodeind(obj, obj.Allnodes{node_ind}.Parent);
+            parent_node = obj.Allnodes{parent_ind};
+            rule_ind = find(strcmp(obj.Varnames, vname));
+            if isempty(rule_ind)
+                error('bad vname value')
+            end
+            if rule_ind == parent_node.Rule{1}
+                node_id = obj.Allnodes{node_ind}.Id;
+                if node_id == parent_node.Lchild
+                    bounds(2) = min(bounds(2), parent_node.Rule{2});
+                elseif node_id == parent_node.Rchild
+                    bounds(1) = max(bounds(1), parent_node.Rule{2});
+                end
+            end
+            if ~isempty(parent_node.Parent) % if not terminal node
+                [bounds, ~] = get_node_bounds(obj, parent_ind, vname, bounds);
+            end
+        end
+        
         % Function which plots the lines and rules of a tree.  To be used
         % only within the Treeplot function.  
         % obj: tree
