@@ -167,29 +167,30 @@ classdef Nodes
         % y: the dependent variable
         function out = loglikefunc(obj,thetree,y)
             out = obj;
+            if ~isempty(thetree.trt_ind)
+                % check if we meet criteria for doing treatment model
+                for ii = 1:length(thetree.trt_ind)
+                    trt_ind = intersect(obj.Xind, thetree.trt_ind{ii});
+                    if length(trt_ind) < thetree.Leafmin && ~thetree.relax
+                        out.Llike = -Inf;
+                        out.p_trt_effect = NaN;
+                        out.marg_trt = NaN;
+                        out.marg_no_trt = NaN;
+                        return;
+                    end
+                end
+            end
             ypart = y(obj.Xind,:);
             [marg_y_no_trt, res_no_trt] = loglikefunc_custom(obj,thetree,ypart);
             out.tau = res_no_trt.tau;
             out.l = res_no_trt.l;
-            if length(thetree.trt_ind) > 1
-                % check if we need to do anything
+            if ~isempty(thetree.trt_ind)
                 marg_y_trt = 0;
                 for ii = 1:length(thetree.trt_ind)
                     ypart = y(intersect(obj.Xind, thetree.trt_ind{ii}), :);
-                    if length(ypart) < thetree.Leafmin && ~thetree.relax % TODO improve efficiency
-                        out.Llike = marg_y_no_trt;
-                        out.p_trt_effect = NaN;
-                        out.marg_trt = NaN;
-                        out.marg_no_trt = marg_y_no_trt;
-                        return;
-                    elseif ~isempty(ypart)
+                    if ~isempty(ypart)
                         [marg_y, ~] = loglikefunc_custom(obj,thetree,ypart);
                         marg_y_trt = marg_y_trt + marg_y;
-                    else
-                        length_ypart = length(ypart)
-                        leafmin = thetree.Leafmin
-                        relax = thethree.relax
-                        error('case not expected');
                     end
                 end
                 marg_trt = log(thetree.p_prior_trt_effect) + marg_y_trt;
@@ -197,13 +198,6 @@ classdef Nodes
                 a = max([marg_trt, marg_no_trt]);
                 % log-sum-exp trick
                 llike = a + log(sum(exp([marg_trt, marg_no_trt] - a)));
-                if ~isfinite(llike)
-                    llike
-                    marg_trt
-                    marg_no_trt
-                    a
-                    p_trt_effect = exp(marg_trt - llike)
-                end
                 out.Llike = llike;
                 out.p_trt_effect = exp(marg_trt - llike);
                 out.marg_trt = marg_trt;

@@ -111,7 +111,7 @@ classdef Tree
                     trt_ind{ii} = find(strcmp(treatment, unique_trts{ii}));
                 end
             else
-                trt_ind = cell({[1:size(X, 1)]'});
+                trt_ind = []; %cell({[1:size(X, 1)]'});
             end
             out.trt_ind = trt_ind;
             
