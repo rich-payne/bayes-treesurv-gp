@@ -37,6 +37,8 @@ classdef Nodes
         tau % EB scale hyperparameters 
         l % EB length hyperparamter
         p_trt_effect
+        marg_trt
+        marg_no_trt
     end
     methods
         % Constructor
@@ -177,10 +179,17 @@ classdef Nodes
                     if length(ypart) < thetree.Leafmin && ~thetree.relax % TODO improve efficiency
                         out.Llike = marg_y_no_trt;
                         out.p_trt_effect = NaN;
+                        out.marg_trt = NaN;
+                        out.marg_no_trt = marg_y_no_trt;
                         return;
                     elseif ~isempty(ypart)
                         [marg_y, ~] = loglikefunc_custom(obj,thetree,ypart);
                         marg_y_trt = marg_y_trt + marg_y;
+                    else
+                        length_ypart = length(ypart)
+                        leafmin = thetree.Leafmin
+                        relax = thethree.relax
+                        error('case not expected');
                     end
                 end
                 marg_trt = log(thetree.p_prior_trt_effect) + marg_y_trt;
@@ -197,9 +206,13 @@ classdef Nodes
                 end
                 out.Llike = llike;
                 out.p_trt_effect = exp(marg_trt - llike);
+                out.marg_trt = marg_trt;
+                out.marg_no_trt = marg_no_trt;
             else
                 out.Llike = marg_y_no_trt;
                 out.p_trt_effect = NaN;
+                out.marg_trt = NaN;
+                out.marg_no_trt = marg_y_no_trt;
             end
         end
         
