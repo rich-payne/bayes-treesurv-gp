@@ -1218,6 +1218,8 @@ classdef Tree
                 if ~adddens
                     text(xval,level,ruletext,'HorizontalAlignment','right')
                 end
+            elseif length(obj.trt_ind) > 1
+                text(xval, level, sprintf('Pr(Trt) = %.1f%%', 100*node.p_trt_effect),'HorizontalAlignment','right');
             end
             if ~isempty(node.Lchild) && ~isempty(node.Rchild)
                 treelines(obj,node.Lchild,level-1,treedepth,xval,'L',plotdens,y,X,kaplan,xlims,ylims)
