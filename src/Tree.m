@@ -23,6 +23,7 @@ classdef Tree
         NodeIds % A vector with the Ids of the nodes in Allnodes 
                 %   (not necessarily in the same order)
         Xclass % The class of each column
+        trt_names % treatment names
         trt_ind % cell array containing indices of each treatment
         p_prior_trt_effect % the probability the data at a terminal node for 
                      % treatments do not have a treatment effect
@@ -114,6 +115,7 @@ classdef Tree
                 trt_ind = []; %cell({[1:size(X, 1)]'});
             end
             out.trt_ind = trt_ind;
+            out.trt_names = unique_trts;
             
             % Get column types
             if isa(X,'table')
@@ -1343,6 +1345,69 @@ classdef Tree
                     treelines(obj,rootnodename,0,treedepth,'','',plotdens,y,X,kaplan,xlims,ylims)
                 end
                 hold off;
+            end
+        end
+        
+        
+        function Treedens(obj, node_index, y, X, varargin)
+            ip = inputParser;
+            ip.FunctionName = 'Treedens';
+            addRequired(ip,'obj');
+            addRequired(ip,'node_index',@isnumeric);
+            addRequired(ip,'y',@isnumeric);
+            addRequired(ip,'X',@istable);
+            addParameter(ip,'alpha',.05); 
+            
+            parse(ip,obj, node_index, y,X,varargin{:});
+            obj = ip.Results.obj;
+            node_index = ip.Results.node_index;
+            y = ip.Results.y;
+            X = ip.Results.X;  
+            alpha = ip.Results.alpha;
+            
+            %get_surv(Y_orig,res,ndraw,graph,ystar,alpha)
+            obj = fatten_tree(obj,X);
+            Ymax = max(y(:, 1));
+            Ystd = y;
+            Ystd(:,1) = Ystd(:,1)/Ymax;
+            n_plots = length(obj.trt_ind) + 1;
+            if n_plots == 1
+                s1 = 1;
+                s2 = 1;
+            elseif n_plots == 2
+                s1 = 1;
+                s2 = 2;
+            elseif n_plots <= 4
+                s1 = 2;
+                s2 = 2;
+            elseif n_plots <= 6
+                s1 = 2;
+                s2 = 3;
+            elseif n_plots <= 9
+                s1 = 3;
+                s2 = 3;
+            else
+                error('cannot plot more than 9 plots');
+            end
+            node = obj.Allnodes{node_index};
+            figure()
+            for ii = 1:n_plots
+                if ii < 2
+                    ypart = Ystd(node.Xind, :);
+                else
+                    ypart = Ystd(intersect(node.Xind, obj.trt_ind{ii-1}), :);
+                end
+                subplot(s1, s2, ii);
+                [~,res] = get_marginal(ypart,obj.K,[],obj.eps,...
+                                       node.tau, node.l,obj.nugget,0);
+                % plot it
+                get_surv(y,res,10000,1,[],alpha);
+                if ii < 2
+                    title('Combined');
+                else 
+                    title(obj.trt_names{ii-1});
+                end
+                %get_surv(y,res,ndraw,graph,ystar,alpha)
             end
         end
         
