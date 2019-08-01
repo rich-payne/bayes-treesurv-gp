@@ -1219,7 +1219,9 @@ classdef Tree
                     text(xval,level,ruletext,'HorizontalAlignment','right')
                 end
             elseif length(obj.trt_ind) > 1
-                text(xval, level, sprintf('Pr(Trt) = %.1f%%', 100*node.p_trt_effect),'HorizontalAlignment','right');
+                text(xval, level, sprintf('Node Index: %d, Pr(Trt) = %.1f%%', nodeind(obj, node.Id), 100*node.p_trt_effect), 'HorizontalAlignment','center');
+            else
+                text(xval, level, sprintf('Node Index: %d', nodeind(obj, node.Id)), 'HorizontalAlignment','center');
             end
             if ~isempty(node.Lchild) && ~isempty(node.Rchild)
                 treelines(obj,node.Lchild,level-1,treedepth,xval,'L',plotdens,y,X,kaplan,xlims,ylims)
