@@ -113,9 +113,11 @@ classdef Tree
                 end
             else
                 trt_ind = []; %cell({[1:size(X, 1)]'});
+                unique_trts = [];
             end
             out.trt_ind = trt_ind;
             out.trt_names = unique_trts;
+            
             
             % Get column types
             if isa(X,'table')
