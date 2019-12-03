@@ -98,6 +98,7 @@ if 0
   load('./output_predictive_trt/mcmc_id1.mat')
   load('./output_prog_pred_trt/mcmc_id1.mat')
   [~, I] = max(output.llike + output.lprior);
+  Treedens(output.Trees{I}, 2, Y_prognostic, X_trt)  % make sure y is right
   Treeplot(output.Trees{I})
   termnodes(output.Trees{I})
   output.Trees{I}.Allnodes{1}
