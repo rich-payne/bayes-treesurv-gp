@@ -1231,6 +1231,12 @@ classdef Tree
                 treelines(obj,node.Lchild,level-1,treedepth,xval,'L',plotdens,y,X,kaplan,xlims,ylims)
                 treelines(obj,node.Rchild,level-1,treedepth,xval,'R',plotdens,y,X,kaplan,xlims,ylims)
             elseif isempty(node.Lchild) && isempty(node.Rchild) && ~isempty(plotdens)
+                % used to split frame for HR
+                if isempty(obj.trt_names)
+                    trt_adj = 1;
+                else 
+                    trt_adj = 2;
+                end
                 xrange = plotdens(1,2) - plotdens(1,1);
                 yrange = plotdens(2,2) - plotdens(2,1);
                 xorigin = plotdens(1,1);
@@ -1238,9 +1244,9 @@ classdef Tree
                 xvald = (xval - xorigin)/xrange;
                 yvald = (level - yorigin)/yrange;
                 % Normalize again
-                thewidth = 2^(-treedepth)*plotdens(4,1);
+                thewidth = 2^(-treedepth)*plotdens(4,1) / trt_adj;
                 theheight = 1/(treedepth + 1)*plotdens(4,2);
-                xvald = xvald*plotdens(4,1) + plotdens(3,1) - thewidth/2;
+                xvald = xvald*plotdens(4,1) + plotdens(3,1) - thewidth / 2 * trt_adj;
                 yvald = yvald*plotdens(4,2) + plotdens(3,2) - theheight;
                 axes('OuterPosition',[xvald,yvald,thewidth,theheight])
                 box on
@@ -1272,14 +1278,16 @@ classdef Tree
 %                             alpha(.75); 
                         hold off
                     end
-                    
-                    
                     if ~isempty(xlims)
                         xlim(xlims)
                     end
                     if ~isempty(ylims)
                         ylim(ylims)
                     end
+                    % add plot for hazard ratios
+                    axes('OuterPosition',[xvald + thewidth,yvald,thewidth,theheight])
+                    box on;
+                    get_surv_tree(obj,y,X,ndraw,graph,x0,ystar,alpha_val,' ');
                 end
             end
         end
