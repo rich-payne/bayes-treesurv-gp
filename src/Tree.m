@@ -1339,6 +1339,7 @@ classdef Tree
                 hold on;
                 treelines(obj,rootnodename,0,treedepth,'','',[],[],[],kaplan,[],[])
                 ylim([-treedepth-1,0]);
+                xlim([- 2 ^ treedepth / 2, 2 ^ treedepth / 2]);
                 axisparms = gca;
                 plotdens = [axisparms.XLim; axisparms.YLim;
                     axisparms.Position(1:2); axisparms.Position(3:4)];
