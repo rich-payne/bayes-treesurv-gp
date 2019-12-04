@@ -25,13 +25,13 @@
 %      the second column (0 if censored, 1 if observed).
 %    X: The covariates
 %    ndraw: the number of Monte Carlo draws to produce the posterior
-%      survival function
+%      log hazard function
 %    graph: 1 to produce a graph.  0 to suppress graphing.
 %    x0: If empty, a graph is produced for each terminal node.  If
 %      non-empty, it must be a table with one row and the same number of
-%      columns of X.  Specifying x0 produces the posterior survival function
+%      columns of X.  Specifying x0 produces the posterior hazard
 %      for an observation with covariates x0.
-%    ystar: A grid where the posterior survival function will be evaluated.
+%    ystar: A grid where the posterior log hazard function will be evaluated.
 %      If empty, grid is determined automatically.
 %    alpha: the significance level for the credible itnervals.
 %    the_title: A string to specify the title of the graphs.  If empty, the
@@ -45,7 +45,7 @@
 %      function for the data in the corresponding terminal node is
 %      returned.
 
-function pdraws = get_surv_tree(thetree,Y,X,ndraw,graph,x0,ystar,alpha,the_title,trt_name)
+function pdraws = get_lh_tree(thetree,Y,X,ndraw,graph,x0,ystar,alpha,the_title,trt_name)
     if ~exist('alpha','var')
         alpha = .05;
     end
@@ -111,7 +111,7 @@ function pdraws = get_surv_tree(thetree,Y,X,ndraw,graph,x0,ystar,alpha,the_title
                 subplot(s1,s2,cntr);
             end
         end
-        pdraws = get_surv(Y,res,ndraw,graph,ystar,alpha);
+        pdraws = get_lh(Y,res,ndraw,graph,ystar,alpha);
         if graph
             if isempty(the_title)
                 title(strcat(['Node Index: ',num2str(ii)]));
@@ -119,7 +119,7 @@ function pdraws = get_surv_tree(thetree,Y,X,ndraw,graph,x0,ystar,alpha,the_title
                 title(the_title)
             end
             xlim([0,Ymax]);
-            ylim([-.05,1.05]);
+            %ylim([-.05,1.05]);
         end
         cntr = cntr + 1;
     end

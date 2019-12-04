@@ -29,7 +29,7 @@
 %    alpha: the significance level for the credible itnervals.
 %
 %    OUTPUT
-%    out_lhr: A structure with the following fields
+%    out_lh: A structure with the following fields
 %      lhr: the ndraw posterior draws of the log hazard function
 %      ystar: the grid on which the posterior log hazard function is
 %        evaluated.  If the res input was created using the scaled data,
@@ -37,7 +37,7 @@
 %      pmean: the posterior mean of the log hazard function
 %      CI: the 1-alpha credible intervals
 
-function out_lhr = get_lhr(Y_orig,res,ndraw,graph,ystar,alpha)
+function out_lh = get_lh(Y_orig,res,ndraw,graph,ystar,alpha)
     Ymax = max(Y_orig(:,1));
     if isempty(ystar)
         nstar = 100;
@@ -63,13 +63,11 @@ function out_lhr = get_lhr(Y_orig,res,ndraw,graph,ystar,alpha)
     end
     pmean = mean(LHR);
     qtiles = quantile(LHR, [alpha/2, 1 - alpha / 2], 1);
-    out_lhr.lhr = LHR;    
-    out_lhr.ystar = ystar;
-    out_lhr.pmean = pmean;
-    out_lhr.CI = qtiles;
+    out_lh.lhr = LHR;    
+    out_lh.ystar = ystar;
+    out_lh.pmean = pmean;
+    out_lh.CI = qtiles;
     if graph
-        size(ystar)
-        size(pmean)
         plot(ystar*Ymax,pmean,':k',ystar*Ymax,qtiles(1,:),'--k',ystar*Ymax,qtiles(2,:),'--k')
         graphpoints = 0;
         if graphpoints

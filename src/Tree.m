@@ -1177,7 +1177,7 @@ classdef Tree
         % y: reponse variable
         % xlims: x range
         % ylims: y range
-        function treelines(obj,nodename,level,treedepth,parentxloc,LR,plotdens,y,X,kaplan,xlims,ylims)
+        function treelines(obj,nodename,level,treedepth,parentxloc,LR,plotdens,y,X,kaplan,xlims,ylims,trt_name)
             width = 1; % space between terminal nodes
             nind = nodeind(obj,nodename);
             node = obj.Allnodes{nind};
@@ -1224,12 +1224,13 @@ classdef Tree
                 end
             elseif length(obj.trt_ind) > 1
                 text(xval, level, sprintf('Node Index: %d, Pr(Trt) = %.1f%%', nodeind(obj, node.Id), 100*node.p_trt_effect), 'HorizontalAlignment','center');
+                nodeind(obj, node.Id)
             else
                 text(xval, level, sprintf('Node Index: %d', nodeind(obj, node.Id)), 'HorizontalAlignment','center');
             end
             if ~isempty(node.Lchild) && ~isempty(node.Rchild)
-                treelines(obj,node.Lchild,level-1,treedepth,xval,'L',plotdens,y,X,kaplan,xlims,ylims)
-                treelines(obj,node.Rchild,level-1,treedepth,xval,'R',plotdens,y,X,kaplan,xlims,ylims)
+                treelines(obj,node.Lchild,level-1,treedepth,xval,'L',plotdens,y,X,kaplan,xlims,ylims,trt_name)
+                treelines(obj,node.Rchild,level-1,treedepth,xval,'R',plotdens,y,X,kaplan,xlims,ylims,trt_name)
             elseif isempty(node.Lchild) && isempty(node.Rchild) && ~isempty(plotdens)
                 % used to split frame for HR
                 if isempty(obj.trt_names)
@@ -1258,7 +1259,8 @@ classdef Tree
                     x0 = X(node.Xind(1),:);
                     ystar = [];
                     alpha_val = .05;
-                    get_surv_tree(obj,y,X,ndraw,graph,x0,ystar,alpha_val,' ');
+                    get_surv_tree(obj,y,X,ndraw,graph,x0,ystar,alpha_val,trt_name, trt_name);
+                    
                     % Add Kaplan Meier plot just to compare
                     if kaplan
                         ypart = y(node.Xind,1);
@@ -1285,9 +1287,28 @@ classdef Tree
                         ylim(ylims)
                     end
                     % add plot for hazard ratios
+                    Ymax = max(y(:, 1));
+                    lh_base = get_lh_tree(obj,y,X,ndraw,0,x0,ystar,alpha_val,' ', trt_name);
+                    ystar = lh_base.ystar;
+                    ystar_grid = ystar * Ymax;
+                    other_trts = obj.trt_names{~strcmp(obj.trt_names, trt_name)};
                     axes('OuterPosition',[xvald + thewidth,yvald,thewidth,theheight])
                     box on;
-                    get_surv_tree(obj,y,X,ndraw,graph,x0,ystar,alpha_val,' ');
+                    cntr = 1;
+                    for otrts={other_trts}
+                        if cntr == 2
+                            hold on;
+                        end
+                        lh = get_lh_tree(obj,y,X,ndraw,0,x0,ystar,alpha_val,' ', otrts);
+                        lhr = lh.lhr - lh_base.lhr;
+                        qtiles = quantile(lhr, [alpha_val/2, 1 - alpha_val / 2], 1);
+                        pmean = lh.pmean - lh_base.pmean;
+                        plot(ystar_grid,pmean,':k',ystar_grid,qtiles(1,:),'--k',ystar_grid,qtiles(2,:),'--k')
+                        cntr = cntr + 1;
+                    end
+                    if cntr >= 2
+                        hold off;
+                    end 
                 end
             end
         end
@@ -1296,36 +1317,38 @@ classdef Tree
         % data as second argument (if densities are desired)
         % xlim as third
         % ylim as fourth
-        function Treeplot(varargin)
-            xlims = [];
-            ylims = [];
-            if nargin >= 1
-                pdensities = 0;
-                obj = varargin{1};
-            end
-            if nargin == 2
+        function Treeplot(obj, varargin)
+            p = inputParser;
+            addRequired(p, 'obj');
+            addOptional(p, 'y', []);
+            addOptional(p, 'X', []);
+            addParameter(p, 'kaplan', 0);
+            addParameter(p, 'xlims', []);
+            addParameter(p, 'ylims', []);
+            addParameter(p, 'trt_name', []);
+            parse(p, obj, varargin{:});
+            R = p.Results;
+            obj = R.obj;
+            y = R.y;
+            X = R.X;
+            kaplan = R.kaplan;
+            xlims = R.xlims;
+            ylims = R.ylims;
+            trt_name = R.trt_name;            
+            
+            if ~(isempty(y) == isempty(X))
                 error('Must specify y and X');
             end
-            if nargin >= 3
+            if ~isempty(y) && ~isempty(X)
                 pdensities = 1;
-                y = varargin{2};
-                X = varargin{3};
                 obj = fatten_tree(obj,X);
-            end
-            if nargin >= 4
-                kaplan = varargin{4};
+                if ~isempty(obj.trt_names) && isempty(trt_name)
+                    trt_name = obj.trt_names{1};
+                elseif isempty(trt_name)
+                    trt_name = ' ';
+                end
             else
-                kaplan = 1 ;
-            end
-            if nargin >= 5
-                xlims = varargin{5};
-            end
-            if nargin >= 6
-                ylims = varargin{6};
-            end
-            
-            if nargin >= 7
-                error('Maximum of 6 arguments')
+                pdensities = 0;
             end
             n = length(obj.Allnodes);
             if n <= 1
@@ -1345,7 +1368,7 @@ classdef Tree
                 treedepth = max(nodegraph);
                 figure;
                 hold on;
-                treelines(obj,rootnodename,0,treedepth,'','',[],[],[],kaplan,[],[])
+                treelines(obj,rootnodename,0,treedepth,'','',[],[],[],kaplan,[],[], [])
                 ylim([-treedepth-1,0]);
                 xlim([- 2 ^ treedepth / 2, 2 ^ treedepth / 2]);
                 axisparms = gca;
@@ -1353,7 +1376,7 @@ classdef Tree
                     axisparms.Position(1:2); axisparms.Position(3:4)];
                 axis off;
                 if pdensities
-                    treelines(obj,rootnodename,0,treedepth,'','',plotdens,y,X,kaplan,xlims,ylims)
+                    treelines(obj,rootnodename,0,treedepth,'','',plotdens,y,X,kaplan,xlims,ylims, trt_name)
                 end
                 hold off;
             end
@@ -1410,7 +1433,7 @@ classdef Tree
                 end
                 subplot(s1, s2, ii);
                 [~,res] = get_marginal(ypart,obj.K,[],obj.eps,...
-                                       node.tau, node.l,obj.nugget,0);
+                                       node.tau, node.l,obj.nugget,1);
                 % plot it
                 get_surv(y,res,10000,1,[],alpha);
                 if ii < 2
