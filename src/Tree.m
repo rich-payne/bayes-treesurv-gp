@@ -1177,7 +1177,7 @@ classdef Tree
         % y: reponse variable
         % xlims: x range
         % ylims: y range
-        function treelines(obj,nodename,level,treedepth,parentxloc,LR,plotdens,y,X,kaplan,xlims,ylims,trt_name)
+        function treelines(obj,nodename,level,treedepth,parentxloc,LR,plotdens,y,X,kaplan,ylims,trt_name)
             width = 1; % space between terminal nodes
             nind = nodeind(obj,nodename);
             node = obj.Allnodes{nind};
@@ -1232,8 +1232,8 @@ classdef Tree
                 end
             end
             if ~isempty(node.Lchild) && ~isempty(node.Rchild)
-                treelines(obj,node.Lchild,level-1,treedepth,xval,'L',plotdens,y,X,kaplan,xlims,ylims,trt_name)
-                treelines(obj,node.Rchild,level-1,treedepth,xval,'R',plotdens,y,X,kaplan,xlims,ylims,trt_name)
+                treelines(obj,node.Lchild,level-1,treedepth,xval,'L',plotdens,y,X,kaplan,ylims,trt_name)
+                treelines(obj,node.Rchild,level-1,treedepth,xval,'R',plotdens,y,X,kaplan,ylims,trt_name)
             elseif isempty(node.Lchild) && isempty(node.Rchild) && ~isempty(plotdens)
                 % used to split frame for HR
                 if isempty(obj.trt_names)
@@ -1283,12 +1283,6 @@ classdef Tree
 %                             alpha(.75); 
                         hold off
                     end
-                    if ~isempty(xlims)
-                        xlim(xlims)
-                    end
-                    if ~isempty(ylims)
-                        ylim(ylims)
-                    end
                     % add plot for hazard ratios
                     Ymax = max(y(:, 1));
                     lh_base = get_lh_tree(obj,y,X,ndraw,0,x0,ystar,alpha_val,' ', trt_name);
@@ -1304,40 +1298,40 @@ classdef Tree
                         end
                         lh = get_lh_tree(obj,y,X,ndraw,0,x0,ystar,alpha_val,' ', otrts);
                         lhr = lh.lhr - lh_base.lhr;
-                        qtiles = quantile(lhr, [alpha_val/2, 1 - alpha_val / 2], 1);
-                        pmean = lh.pmean - lh_base.pmean;
-                        plot(ystar_grid,pmean,':k',ystar_grid,qtiles(1,:),'--k',ystar_grid,qtiles(2,:),'--k')
+                        hr = exp(lhr);
+                        qtiles = quantile(hr, [alpha_val/2, .5, 1 - alpha_val / 2], 1);
+                        %pmean = lh.pmean - lh_base.pmean;
+                        plot(ystar_grid,qtiles(2, :),':k',ystar_grid,qtiles(1,:),'--k',ystar_grid,qtiles(3,:),'--k')
                         cntr = cntr + 1;
                     end
                     if cntr >= 2
                         hold off;
-                    end 
+                    end
+                    xlim([0,Ymax]);
+                    if ~isempty(ylims)
+                        ylim(ylims)
+                    end
                 end
             end
         end
         
         % Tree as first argument.
-        % data as second argument (if densities are desired)
-        % xlim as third
-        % ylim as fourth
-        function Treeplot(obj, varargin)
+       function Treeplot(obj, varargin)
             p = inputParser;
             addRequired(p, 'obj');
             addOptional(p, 'y', []);
             addOptional(p, 'X', []);
             addParameter(p, 'kaplan', 0);
-            addParameter(p, 'xlims', []);
-            addParameter(p, 'ylims', []);
             addParameter(p, 'trt_name', []);
+            addParameter(p, 'ylims', []);
             parse(p, obj, varargin{:});
             R = p.Results;
             obj = R.obj;
             y = R.y;
             X = R.X;
             kaplan = R.kaplan;
-            xlims = R.xlims;
+            trt_name = R.trt_name; 
             ylims = R.ylims;
-            trt_name = R.trt_name;            
             
             if ~(isempty(y) == isempty(X))
                 error('Must specify y and X');
@@ -1371,7 +1365,7 @@ classdef Tree
                 treedepth = max(nodegraph);
                 figure;
                 hold on;
-                treelines(obj,rootnodename,0,treedepth,'','',[],[],[],kaplan,[],[], [])
+                treelines(obj,rootnodename,0,treedepth,'','',[],[],[],kaplan, ylims, [])
                 ylim([-treedepth-1,0]);
                 xlim([- 2 ^ treedepth / 2, 2 ^ treedepth / 2]);
                 axisparms = gca;
@@ -1379,7 +1373,7 @@ classdef Tree
                     axisparms.Position(1:2); axisparms.Position(3:4)];
                 axis off;
                 if pdensities
-                    treelines(obj,rootnodename,0,treedepth,'','',plotdens,y,X,kaplan,xlims,ylims, trt_name)
+                    treelines(obj,rootnodename,0,treedepth,'','',plotdens,y,X,kaplan, ylims, trt_name)
                 end
                 hold off;
             end
