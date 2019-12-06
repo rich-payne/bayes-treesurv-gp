@@ -1301,10 +1301,21 @@ classdef Tree
                             end
                             lh = get_lh_tree(obj,y,X,ndraw,0,x0,ystar,alpha_val,' ', otrts);
                             lhr = lh.lhr - lh_base.lhr;
-                            hr = exp(lhr);
-                            qtiles = quantile(hr, [alpha_val/2, .5, 1 - alpha_val / 2], 1);
+                            % add mixture component.
+                            ind = binornd(1, node.p_trt_effect, ndraw, 1);
+                            for ii = 1:ndraw
+                                if ind(ii) == 0
+                                    lhr(ii, :) = 0;
+                                end
+                            end
+                            %hr = exp(lhr);
+                            qtiles = quantile(lhr, [alpha_val/2, .5, 1 - alpha_val / 2], 1);
                             %pmean = lh.pmean - lh_base.pmean;
                             plot(ystar_grid,qtiles(2, :),':k',ystar_grid,qtiles(1,:),'--k',ystar_grid,qtiles(3,:),'--k')
+                            hold on;
+                                yline(0, '-.b');
+                            hold off;
+                            title('log HR');
                             cntr = cntr + 1;
                         end
                         if cntr >= 2
