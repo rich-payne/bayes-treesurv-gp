@@ -1221,6 +1221,7 @@ classdef Tree
                 end
                 if ~adddens
                     text(xval,level,ruletext,'HorizontalAlignment','right')
+                    text(xval,level,sprintf(' Node Index: %d', nodeind(obj, node.Id)), 'HorizontalAlignment', 'left'); 
                 end
             elseif length(obj.trt_ind) > 1
                 if ~adddens
@@ -1283,33 +1284,36 @@ classdef Tree
 %                             alpha(.75); 
                         hold off
                     end
-                    % add plot for hazard ratios
-                    Ymax = max(y(:, 1));
-                    lh_base = get_lh_tree(obj,y,X,ndraw,0,x0,ystar,alpha_val,' ', trt_name);
-                    ystar = lh_base.ystar;
-                    ystar_grid = ystar * Ymax;
-                    other_trts = obj.trt_names{~strcmp(obj.trt_names, trt_name)};
-                    axes('OuterPosition',[xvald + thewidth,yvald,thewidth,theheight])
-                    box on;
-                    cntr = 1;
-                    for otrts={other_trts}
-                        if cntr == 2
-                            hold on;
+                    
+                    if ~isempty(obj.trt_names)
+                        % add plot for hazard ratios
+                        Ymax = max(y(:, 1));
+                        lh_base = get_lh_tree(obj,y,X,ndraw,0,x0,ystar,alpha_val,' ', trt_name);
+                        ystar = lh_base.ystar;
+                        ystar_grid = ystar * Ymax;
+                        other_trts = obj.trt_names{~strcmp(obj.trt_names, trt_name)};
+                        axes('OuterPosition',[xvald + thewidth,yvald,thewidth,theheight])
+                        box on;
+                        cntr = 1;
+                        for otrts={other_trts}
+                            if cntr == 2
+                                hold on;
+                            end
+                            lh = get_lh_tree(obj,y,X,ndraw,0,x0,ystar,alpha_val,' ', otrts);
+                            lhr = lh.lhr - lh_base.lhr;
+                            hr = exp(lhr);
+                            qtiles = quantile(hr, [alpha_val/2, .5, 1 - alpha_val / 2], 1);
+                            %pmean = lh.pmean - lh_base.pmean;
+                            plot(ystar_grid,qtiles(2, :),':k',ystar_grid,qtiles(1,:),'--k',ystar_grid,qtiles(3,:),'--k')
+                            cntr = cntr + 1;
                         end
-                        lh = get_lh_tree(obj,y,X,ndraw,0,x0,ystar,alpha_val,' ', otrts);
-                        lhr = lh.lhr - lh_base.lhr;
-                        hr = exp(lhr);
-                        qtiles = quantile(hr, [alpha_val/2, .5, 1 - alpha_val / 2], 1);
-                        %pmean = lh.pmean - lh_base.pmean;
-                        plot(ystar_grid,qtiles(2, :),':k',ystar_grid,qtiles(1,:),'--k',ystar_grid,qtiles(3,:),'--k')
-                        cntr = cntr + 1;
-                    end
-                    if cntr >= 2
-                        hold off;
-                    end
-                    xlim([0,Ymax]);
-                    if ~isempty(ylims)
-                        ylim(ylims)
+                        if cntr >= 2
+                            hold off;
+                        end
+                        xlim([0,Ymax]);
+                        if ~isempty(ylims)
+                            ylim(ylims)
+                        end
                     end
                 end
             end
@@ -1438,6 +1442,7 @@ classdef Tree
                 else 
                     title(obj.trt_names{ii-1});
                 end
+                xlim([0, Ymax]);
                 %get_surv(y,res,ndraw,graph,ystar,alpha)
             end
         end
