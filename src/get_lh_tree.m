@@ -91,18 +91,20 @@ function pdraws = get_lh_tree(thetree,Y,X,ndraw,graph,x0,ystar,alpha,the_title,t
     
     cntr = 1;
     for ii=theind'
+        res_trt = [];
+        ypart_pooled = Ystd(thetree.Allnodes{ii}.Xind,:);
         if isempty(thetree.trt_names)
-            ypart = Ystd(thetree.Allnodes{ii}.Xind,:);
-            optim_it = 0;
-        else
             trt_name_ind = find(strcmp(thetree.trt_names, trt_name));
-            ypart = Ystd(intersect(thetree.Allnodes{ii}.Xind, thetree.trt_ind{trt_name_ind}),:);
-            optim_it = 1;
-        end
-        [~,res] = get_marginal(ypart,thetree.K,[],thetree.eps,...
+            ypart_trt = Ystd(intersect(thetree.Allnodes{ii}.Xind, thetree.trt_ind{trt_name_ind}),:);
+            [~,res_trt] = get_marginal(ypart_trt,thetree.K,[],thetree.eps,...
             thetree.Allnodes{ii}.tau,...
             thetree.Allnodes{ii}.l,...
-            thetree.nugget,optim_it);
+            thetree.nugget,1);
+        end
+        [~,res_pooled] = get_marginal(ypart_pooled,thetree.K,[],thetree.eps,...
+            thetree.Allnodes{ii}.tau,...
+            thetree.Allnodes{ii}.l,...
+            thetree.nugget,0);
         if graph
             if ~dosubplot
                 figure(cntr);
@@ -111,7 +113,7 @@ function pdraws = get_lh_tree(thetree,Y,X,ndraw,graph,x0,ystar,alpha,the_title,t
                 subplot(s1,s2,cntr);
             end
         end
-        pdraws = get_lh(Y,res,ndraw,graph,ystar,alpha);
+        pdraws = get_lh(Y,res_pooled,'ndraw', ndraw,'graph', graph,'ystar', ystar, 'alpha', alpha, 'res2', res_trt, 'p_trt_effect', thetree.Allnodes{ii}.p_trt_effect);
         if graph
             if isempty(the_title)
                 title(strcat(['Node Index: ',num2str(ii)]));

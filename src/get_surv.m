@@ -139,5 +139,4 @@ function SURV = draw_surv(res, ystar, ndraw)
         
         SURV(ii,:) = thesurv;
     end
-    
 end

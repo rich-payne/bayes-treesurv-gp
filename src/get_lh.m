@@ -37,7 +37,27 @@
 %      pmean: the posterior mean of the log hazard function
 %      CI: the 1-alpha credible intervals
 
-function out_lh = get_lh(Y_orig,res,ndraw,graph,ystar,alpha)
+function out_lh = get_lh(Y_orig,res,varargin)
+    p = inputParser;
+    addRequired(p, 'Y_orig');
+    addRequired(p, 'res');
+    addParameter(p, 'ndraw', 10000);
+    addParameter(p, 'graph', 1);
+    addParameter(p, 'ystar', []);
+    addParameter(p, 'alpha', .05);
+    addParameter(p, 'res2', []);
+    addParameter(p, 'p_trt_effect', []);
+    parse(p, Y_orig, res, varargin{:});
+    R = p.Results;
+    Y_orig = R.Y_orig;
+    res = R.res;
+    ndraw = R.ndraw;
+    graph = R.graph;
+    ystar = R.ystar;
+    alpha = R.alpha;
+    res2 = R.res2;
+    p_trt_effect = R.p_trt_effect;
+    
     Ymax = max(Y_orig(:,1));
     if isempty(ystar)
         nstar = 100;
@@ -45,25 +65,24 @@ function out_lh = get_lh(Y_orig,res,ndraw,graph,ystar,alpha)
     else
         nstar = length(ystar);
     end
-    binind = zeros(nstar,1);
-    K = length(res.s) - 1;
-    for ii=1:nstar
-        [~,I] = max( ystar(ii) < res.s(2:(K+1)) );
-        if I == 0 % ystar falls beyond the maximum s
-            I = K; % put ystar value in the last bin for extrapolation...
-        end
-        binind(ii) = I;
+    LH = draw_lh(res, ystar, ndraw);
+    if ~isempty(res2)
+        LH2 = draw_lh(res2, ystar, ndraw);
+        ind = binornd(1, p_trt_effect, size(LH, 1), 1);
+        LH_FINAL = zeros(size(LH, 1), size(LH, 2));
+        for ii = 1:length(ind)
+            if ind == 0
+                LH_FINAL(ii, :) = LH(ii, :);
+            else
+                LH_FINAL(ii, :) = LH2(ii, :);
+            end
+        end    
+    else      
+        LH_FINAL = LH; 
     end
-    %thesurv = zeros(nstar,1);
-    samps = chol(res.Omegainv) \ normrnd(0,1,length(res.f),ndraw);
-    samps = (samps + res.f)';
-    LHR = zeros(size(samps,1),nstar);
-    for ii=1:size(samps,1)
-        LHR(ii, :) = samps(ii, binind);
-    end
-    pmean = mean(LHR);
-    qtiles = quantile(LHR, [alpha/2, 1 - alpha / 2], 1);
-    out_lh.lhr = LHR;    
+    pmean = mean(LH_FINAL);
+    qtiles = quantile(LH_FINAL, [alpha/2, 1 - alpha / 2], 1);
+    out_lh.lhr = LH_FINAL;    
     out_lh.ystar = ystar;
     out_lh.pmean = pmean;
     out_lh.CI = qtiles;
@@ -81,4 +100,25 @@ function out_lh = get_lh(Y_orig,res,ndraw,graph,ystar,alpha)
             hold off
         end
     end   
+end
+
+
+function LHR = draw_lh(res, ystar, ndraw) 
+    nstar = length(ystar);
+    binind = zeros(nstar,1);
+    K = length(res.s) - 1;
+    for ii=1:nstar
+        [Imax,I] = max( ystar(ii) < res.s(2:(K+1)) );
+        if Imax == 0 % ystar falls beyond the maximum s
+            I = K; % put ystar value in the last bin for extrapolation...
+        end
+        binind(ii) = I;
+    end
+    %thesurv = zeros(nstar,1);
+    samps = chol(res.Omegainv) \ normrnd(0,1,length(res.f),ndraw);
+    samps = (samps + res.f)';
+    LHR = zeros(size(samps,1),nstar);
+    for ii=1:size(samps,1)
+        LHR(ii, :) = samps(ii, binind);
+    end
 end
