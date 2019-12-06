@@ -1436,7 +1436,7 @@ classdef Tree
                 [~,res] = get_marginal(ypart,obj.K,[],obj.eps,...
                                        node.tau, node.l,obj.nugget,1);
                 % plot it
-                get_surv(y,res,10000,1,[],alpha);
+                get_surv(y,res,'alpha', alpha);
                 if ii < 2
                     title('Combined');
                 else 

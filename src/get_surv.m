@@ -38,7 +38,27 @@
 %      CI: the 1-alpha credible intervals
    
 
-function out = get_surv(Y_orig,res,ndraw,graph,ystar,alpha)
+function out = get_surv(Y_orig,res,varargin)
+    p = inputParser;
+    addRequired(p, 'Y_orig');
+    addRequired(p, 'res');
+    addParameter(p, 'ndraw', 10000);
+    addParameter(p, 'graph', 1);
+    addParameter(p, 'ystar', []);
+    addParameter(p, 'alpha', .05);
+    addParameter(p, 'res2', []);
+    addParameter(p, 'p_trt_effect', []);
+    parse(p, Y_orig, res, varargin{:});
+    R = p.Results;
+    Y_orig = R.Y_orig;
+    res = R.res;
+    ndraw = R.ndraw;
+    graph = R.graph;
+    ystar = R.ystar;
+    alpha = R.alpha;
+    res2 = R.res2;
+    p_trt_effect = R.p_trt_effect;
+    
     Ymax = max(Y_orig(:,1));
     if isempty(ystar)
         nstar = 100;
@@ -46,48 +66,35 @@ function out = get_surv(Y_orig,res,ndraw,graph,ystar,alpha)
     else
         nstar = length(ystar);
     end
-    binind = zeros(nstar,1);
-    K = length(res.s) - 1;
-    for ii=1:nstar
-        [~,I] = max( ystar(ii) < res.s(2:(K+1)) );
-        if I == 0 % ystar falls beyond the maximum s
-            I = K; % put ystar value in the last bin for extrapolation...
-        end
-        binind(ii) = I;
-    end
-    thesurv = zeros(nstar,1);
-    samps = chol(res.Omegainv) \ normrnd(0,1,length(res.f),ndraw);
-    samps = (samps + res.f)';
-    SURV = zeros(size(samps,1),nstar);
-    for ii=1:size(samps,1)
-        f = samps(ii,:)';
-        for jj=1:nstar
-            a = ystar(jj) - res.s(binind(jj));
-            if binind(jj) > 1
-                thediff = diff(res.s');
-                b = sum( thediff(1:(binind(jj)-1)) .* exp(f(1:(binind(jj)-1))) );
+    SURV = draw_surv(res, ystar, ndraw);
+    if ~isempty(res2)
+        SURV2 = draw_surv(res2, ystar, ndraw);
+        ind = binornd(1, p_trt_effect, size(SURV, 1), 1);
+        SURV_FINAL = zeros(size(SURV, 1), size(SURV, 2));
+        for ii = 1:length(ind)
+            if ind == 0
+                SURV_FINAL(ii, :) = SURV(ii, :);
             else
-                b = 0;
+                SURV_FINAL(ii, :) = SURV2(ii, :);
             end
-            thesurv(jj) = exp( - exp(f(binind(jj)))*a - b );
-            %[a,b,binind(jj)]
-            %f(1:(binind(jj)-1))'
-        end
-        %if(any(diff(thesurv) < 0))
-            %thesurv
-        %end
-        SURV(ii,:) = thesurv;
+        end    
+    else      
+        SURV_FINAL = SURV; 
     end
-    out.surv = SURV;
+    out.surv = SURV_FINAL;  
     out.ystar = ystar;
     
-    pmean = mean(SURV);
-    qtiles = quantile(SURV,[alpha/2,1-alpha/2],1);
+    pmean = mean(SURV_FINAL);
+    qtiles = quantile(SURV_FINAL,[alpha/2,1-alpha/2],1);
 
     out.pmean = pmean;
     out.CI = qtiles;
     if graph
         plot(ystar*Ymax,pmean,':k',ystar*Ymax,qtiles(1,:),'--k',ystar*Ymax,qtiles(2,:),'--k')
+        hold on;
+            %plot(ystar*Ymax,mean(SURV), ':r');
+            %plot(ystar*Ymax,mean(SURV2), ':b');
+        hold off;
         graphpoints = 0;
         if graphpoints
             survpoints = interp1(ystar*Ymax,pmean,Y_orig);
@@ -100,4 +107,37 @@ function out = get_surv(Y_orig,res,ndraw,graph,ystar,alpha)
             hold off
         end
     end   
+end
+
+function SURV = draw_surv(res, ystar, ndraw) 
+    nstar = length(ystar);
+    binind = zeros(nstar,1);
+    K = length(res.s) - 1;
+    for ii=1:nstar
+        [Imax,I] = max( ystar(ii) < res.s(2:(K+1)) );
+        if Imax == 0 % ystar falls beyond the maximum s
+            I = K; % put ystar value in the last bin for extrapolation...
+        end
+        binind(ii) = I;
+    end
+    thesurv = zeros(nstar,1);
+    samps = chol(res.Omegainv) \ normrnd(0,1,length(res.f),ndraw);
+    samps = (samps + res.f)';
+    SURV = zeros(size(samps,1),nstar);
+    thediff = diff(res.s');
+    for ii=1:size(samps,1)
+        f = samps(ii,:)';
+        for jj=1:nstar
+            a = ystar(jj) - res.s(binind(jj));
+            if binind(jj) > 1
+                b = sum( thediff(1:(binind(jj)-1)) .* exp(f(1:(binind(jj)-1))) );
+            else
+                b = 0;
+            end
+            thesurv(jj) = exp( - exp(f(binind(jj)))*a - b );
+        end
+        
+        SURV(ii,:) = thesurv;
+    end
+    
 end
