@@ -105,4 +105,8 @@ if 0
   output.Trees{I}.Allnodes{1}
   output.Trees{I}.Allnodes{2}
   output.Trees{I}.Allnodes{3}
+  
+  atree = output.Trees{I};
+  atree = fatten_tree(atree, X_trt);
+  [marg_y, out] = get_predictive_marg(atree.Allnodes{2}, atree, Y_prognostic, 'Treatment1', 'Treatment2');
 end

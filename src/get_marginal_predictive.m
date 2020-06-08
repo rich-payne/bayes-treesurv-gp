@@ -69,7 +69,7 @@ function [marg_y,out] = get_marginal_predictive(Y1, Y2, Y3, Y4, K1, K2, K3, K4, 
     l = [l1, l2, l3, l4];
     % Here's where EB happens...
     if EB == 1
-        [tau,l] = get_thetas(ns1, ns2, ns3, ns4, ab1, ab2, ab3, ab4,Z1, Z2, Z3, Z4,tau1, tau2, tau3, tau4, l1, l2, l3, l4,eps);
+        [tau,l] = get_thetas_predictive(ns1, ns2, ns3, ns4, ab1, ab2, ab3, ab4,Z1, Z2, Z3, Z4,tau1, tau2, tau3, tau4, l1, l2, l3, l4,eps);
     elseif EB  == 2
         % [tau,l] = get_thetas_EM(Y,tau,l,nugget,K,max_cntr_EM,tol_EM);
     end
@@ -90,14 +90,14 @@ function [marg_y,out] = get_marginal_predictive(Y1, Y2, Y3, Y4, K1, K2, K3, K4, 
         out.l = l;
         % out.mu = mu;
         out.Omegainv = Omegainv;
-        out.s = s;
-        out.a = a;
-        out.b = b;
-        out.ns = ns;
-        out.ms = ms;
-        out.binind = binind;
-        out.Z = Z;
-        out.lprior = get_lprior(tau,l); % prior on hyperparmeters...
+        %out.s = s;
+        %out.a = a;
+        %out.b = b;
+        %out.ns = ns;
+        %out.ms = ms;
+        %out.binind = binind;
+        %out.Z = Z;
+        %out.lprior = get_lprior(tau,l); % prior on hyperparmeters...
         % out.theta_hat = theta_hat;
     end
 end

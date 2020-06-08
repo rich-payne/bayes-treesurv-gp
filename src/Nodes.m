@@ -39,6 +39,12 @@ classdef Nodes
         p_trt_effect
         marg_trt
         marg_no_trt
+        p_predictive % probability of a predictive biomarker
+        marg_no_predictive % same HR
+        marg_predictive % separate HR
+        p_prognostic
+        marg_prognostlic_L % left node
+        marg_prognostlic_R % right node
     end
     methods
         % Constructor
@@ -208,6 +214,35 @@ classdef Nodes
                 out.marg_trt = NaN;
                 out.marg_no_trt = marg_y_no_trt;
             end
+        end
+        
+        
+        function [marg_y, out] = get_predictive_marg(obj, thetree, Y, control, treatment)
+%             if length(thetree.trt_ind) ~= 2
+%                 error('Predictive probability only supported for two treatments');
+%             end
+            
+            nodeL = thetree.Allnodes{nodeind(thetree, obj.Lchild)};
+            nodeR = thetree.Allnodes{nodeind(thetree, obj.Rchild)};
+            ind_control = find(ismember(thetree.trt_names, control));
+            ind_trt = find(ismember(thetree.trt_names, treatment));
+            Y1 = Y(intersect(thetree.trt_ind{ind_control}, nodeL.Xind), :);
+            Y2 = Y(intersect(thetree.trt_ind{ind_trt}, nodeL.Xind), :);
+            Y3 = Y(intersect(thetree.trt_ind{ind_control}, nodeR.Xind), :);
+            Y4 = Y(intersect(thetree.trt_ind{ind_trt}, nodeR.Xind), :);
+            K1 = thetree.K;
+            K2 = thetree.K;
+            K3 = thetree.K;
+            K4 = thetree.K;
+            whichstarts = rand;
+            if whichstarts < .5
+                tau_start = 1;
+                l_start = .01;
+            else % semi-random start points
+                tau_start = rand*10;
+                l_start = rand*2;
+            end
+           [marg_y,out] = get_marginal_predictive(Y1, Y2, Y3, Y4, K1, K2, K3, K4, [], [], [], [],thetree.eps, tau_start, tau_start, tau_start, tau_start, l_start, l_start, l_start, l_start,thetree.EB);
         end
         
         % Obtain possible splitting values for a node

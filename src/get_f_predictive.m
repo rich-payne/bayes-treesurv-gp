@@ -37,7 +37,7 @@
 %      the Laplace approximation.  That is, p(f|y) is approximated (via the
 %      Laplace approximation) to be N(f_final, Omegainv^{-1})
 
-function [f_final,marg_y,Omegainv] =  get_f_predictive(ns1, ns2, ns3, ns4, ab1, ab2, ab3, ab4,Z1, Z2, Z3, Z4,tau1, tau2, tau3, tau4,l1, l2, l3, l4,eps)
+function [f_final,marg_y,Omegainv] =  get_f_predictive(ns1, ns2, ns3, ns4, ab1, ab2, ab3, ab4, Z1, Z2, Z3, Z4,tau1, tau2, tau3, tau4,l1, l2, l3, l4,eps)
     % warning('off','MATLAB:nearlySingularMatrix')
     [Sigmainv1, fhat1] = get_sigma_f(Z1, tau1, l1, ns1, ab1);
     [Sigmainv2, fhat2] = get_sigma_f(Z2, tau2, l2, ns2, ab2);
@@ -48,7 +48,7 @@ function [f_final,marg_y,Omegainv] =  get_f_predictive(ns1, ns2, ns3, ns4, ab1, 
     f = [fhat1; fhat2; fhat3; fhat4];
     Sigmainv = blkdiag(Sigmainv1, Sigmainv2, Sigmainv3, Sigmainv4);
         
-    if(~all(isfinite(fhat)))
+    if(~all(isfinite(f)))
         error('fhat is not finite');
     end
     

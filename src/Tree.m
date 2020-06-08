@@ -1166,6 +1166,21 @@ classdef Tree
             end
         end
         
+        
+        function out = add_predictive(obj)
+            tnode_index = termnodes(obj);
+            for ii = 1:length(obj.Allnodes)
+                if ~ismember(ii, tnode_index) % if interior node
+                    % out = update_predictive(obj.Allnodes{ii});  % still need to write this function...
+%                     thenode = obj.Allnodes{ii};
+%                     thenodeL;
+%                     thenodeR;
+%                     Y1 = trt_indL = intersect(thenodeL.Xind, obj.trt_ind{ii});
+%                     [marg_y,out] = get_marginal_predictive(Y1, Y2, Y3, Y4, K1, K2, K3, K4, s1, s2, s3, s4,eps,tau1, tau2, tau3, tau4, l1, l2, l3, l4,EB)
+                end
+            end
+        end
+        
         % Function which plots the lines and rules of a tree.  To be used
         % only within the Treeplot function.  
         % obj: tree
