@@ -128,6 +128,9 @@ function Tree_Surv(y,X,varargin)
     % parameters
     
     % Validation of values
+    if size(y,2) ~= 2
+        error('y must have two columns');
+    end    
     if size(y,1) ~= size(X,1)
         error('The dimensions of y and X must agree.')
     end
