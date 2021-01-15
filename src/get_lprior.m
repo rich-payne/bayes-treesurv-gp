@@ -1,6 +1,5 @@
 %    bayes-treesurv-gp provides a Bayesian tree partition model to flexibly 
 %    estimate survival functions in various regions of the covariate space.
-%    Copyright (C) 2017-2018  Richard D. Payne
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
