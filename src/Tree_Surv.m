@@ -1,6 +1,5 @@
 %    bayes-treesurv-gp provides a Bayesian tree partition model to flexibly 
 %    estimate survival functions in various regions of the covariate space.
-%    Copyright (C) 2017-2018  Richard D. Payne
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -149,6 +148,9 @@ function Tree_Surv(y,X,varargin)
     end
     
     % Validation of values
+    if size(y,2) ~= 2
+        error('y must have two columns');
+    end    
     if size(y,1) ~= size(X,1)
         error('The dimensions of y and X must agree.')
     end
@@ -265,7 +267,7 @@ function Tree_Surv(y,X,varargin)
             try 
                 load(strcat([resume,files(ii).name]));
             catch
-                error('Cannot load files to resume MCMC. Verify parpool size and number of files match.')
+                error(['Cannot load ', strcat([resume,files(ii).name]), ' to resume MCMC. Verify parpool size and number of files match.'])
             end
             nnn = length(output.llike);
             tmptree = output.Trees{nnn};
@@ -439,10 +441,12 @@ function Tree_Surv(y,X,varargin)
 
                 %if myname == master % Print progress
                     if mod(ii,nprint) == 0
-                        disp(['i = ',num2str(ii),', ID = ',num2str(myname),', llike = ',num2str(T.Lliketree),...
+                        disp(['i = ',num2str(ii),', ID = ',num2str(myname),...
+                            ', Size = ',num2str(T.Ntermnodes),...
+                            ', lpost = ',num2str(T.Lliketree + T.Prior),...
+                            ', llike = ',num2str(T.Lliketree),...
                             ', accept = ',num2str(naccept/ii),...
                             ', swapaccept = ',num2str(swapaccepttotal),'/',num2str(swaptotal),...
-                            ', Size = ',num2str(T.Ntermnodes),...
                             ', temp = ',num2str(T.Temp)]);
                         if myname == master
                             disp(' ');
@@ -635,10 +639,11 @@ function Tree_Surv(y,X,varargin)
             if mod(ii, nprint) == 0
                 for jj = 1:n_parallel_temp
                     disp(['i = ',num2str(ii),', ID = ',num2str(jj),...
+                        ', Size = ',num2str(T_all{jj}.Ntermnodes),...
+                        ', lpost = ',num2str(T_all{jj}.Lliketree + T_all{jj}.Prior),...
                         ', llike = ',num2str(T_all{jj}.Lliketree),...
                         ', accept = ',num2str(100 * N_ACCEPT(jj, :)/ii, '%.0f, '),...
                         ' swapaccept = ',num2str(swapaccepttotal(jj)),'/',num2str(swaptotal(jj)),...
-                        ', Size = ',num2str(T_all{jj}.Ntermnodes),...
                         ', temp = ',num2str(T_all{jj}.Temp)]);
                 end
             end

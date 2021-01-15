@@ -1,6 +1,5 @@
 %    bayes-treesurv-gp provides a Bayesian tree partition model to flexibly 
 %    estimate survival functions in various regions of the covariate space.
-%    Copyright (C) 2016-2018  Richard D. Payne
 %
 %    This program is free software: you can redistribute it and/or modify
 %    it under the terms of the GNU General Public License as published by
@@ -1050,7 +1049,7 @@ classdef Tree
                         error('non-finite prior evaluation')
                     end
                 else % if a terminal node
-                    lprior = lprior + log(1 - obj.gamma/(1 + d)^obj.beta);
+                    lprior = lprior + log(1 - obj.gamma * (1 + d)^(-obj.beta));                    
                 end                   
             end
             out.Prior = lprior;
