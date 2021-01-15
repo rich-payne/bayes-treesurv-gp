@@ -1023,7 +1023,7 @@ classdef Tree
                         error('non-finite prior evaluation')
                     end
                 else % if a terminal node
-                    lprior = lprior + log(1 - obj.gamma/(1 + d)^obj.beta);
+                    lprior = lprior + log(1 - obj.gamma * (1 + d)^(-obj.beta));                    
                 end                   
             end
             out.Prior = lprior;
