@@ -622,6 +622,7 @@ function Tree_Surv(y,X,varargin)
                         ' swapaccept = ',num2str(swapaccepttotal(jj)),'/',num2str(swaptotal(jj)),...
                         ', temp = ',num2str(T_all{jj}.Temp)]);
                 end
+                disp(' ');
             end
             
             % Record Values       
