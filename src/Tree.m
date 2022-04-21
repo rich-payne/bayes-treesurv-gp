@@ -1193,7 +1193,7 @@ classdef Tree
                                 plot(x,1-f,'-.r')
                                 plot(x,1-flo,'-.r');
                                 plot(x,1-fup,'-.r');
-                            if kaplan == 2
+                            elseif kaplan == 2
                                 plot(x,1-f,'-.k')
                                 plot(x,1-flo,'-.k');
                                 plot(x,1-fup,'-.k');
