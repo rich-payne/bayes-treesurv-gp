@@ -1189,9 +1189,15 @@ classdef Tree
                         cens = y(node.Xind,2) == 0;
                         [f,x,flo,fup] = ecdf(ypart,'censoring',cens);
                         hold on
-                            plot(x,1-f,':r')
-                            plot(x,1-flo,'--r');
-                            plot(x,1-fup,'--r');
+                            if kaplan == 1
+                                plot(x,1-f,'-.r')
+                                plot(x,1-flo,'-.r');
+                                plot(x,1-fup,'-.r');
+                            if kaplan == 2
+                                plot(x,1-f,'-.k')
+                                plot(x,1-flo,'-.k');
+                                plot(x,1-fup,'-.k');
+                            end
 %                             fup = fup(2:(end-1));
 %                             flo = flo(2:(end-1));
 %                             x = x(2:(end-1));
