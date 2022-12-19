@@ -38,9 +38,11 @@
 %
 %    OUTPUT
 %    pdraws: If x0 is empty (i.e. all survival functions are plotted), then
-%      pdraws is empty.  If x0 is non-empty, the output from the get_surv
+%      all output for each terminal node from the function get_surv is
+%      returned.  If x0 is non-empty, the output from the get_surv
 %      function for the data in the corresponding terminal node is
 %      returned.
+%    term_nod_ind: the terminal node index for each element of pdraws.
 
 function [pdraws, term_node_ind] = get_surv_tree(thetree,Y,X,ndraw,graph,x0,ystar,alpha,the_title)
     if ~exist('alpha','var')
