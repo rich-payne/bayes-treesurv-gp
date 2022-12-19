@@ -103,7 +103,7 @@ function [pdraws, term_node_ind] = get_surv_tree(thetree,Y,X,ndraw,graph,x0,ysta
                 subplot(s1,s2,cntr);
             end
         end
-        pdraws{cntr} = get_surv(Y,res,ndraw,graph,ystar,alpha);
+        pdraws{cntr} = get_surv(Y,res,ndraw,graph,ystar,alpha,0);
         if graph
             if isempty(the_title)
                 title(strcat(['Node Index: ',num2str(ii)]));
