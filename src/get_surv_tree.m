@@ -42,7 +42,7 @@
 %      function for the data in the corresponding terminal node is
 %      returned.
 
-function pdraws = get_surv_tree(thetree,Y,X,ndraw,graph,x0,ystar,alpha,the_title)
+function [pdraws, term_node_ind] = get_surv_tree(thetree,Y,X,ndraw,graph,x0,ystar,alpha,the_title)
     if ~exist('alpha','var')
         alpha = .05;
     end
@@ -54,9 +54,9 @@ function pdraws = get_surv_tree(thetree,Y,X,ndraw,graph,x0,ystar,alpha,the_title
         end
     end
     thetree = fatten_tree(thetree,X);
-    I = termnodes(thetree);
+    term_node_ind = termnodes(thetree);
     if isempty(x0)
-        theind = I;
+        theind = term_node_ind;
     else
         [~,theind] = get_termnode(thetree,x0);
     end    
@@ -87,6 +87,7 @@ function pdraws = get_surv_tree(thetree,Y,X,ndraw,graph,x0,ystar,alpha,the_title
     Ystd(:,1) = Ystd(:,1)/Ymax;
     
     cntr = 1;
+    pdraws = cell(nnodes, 1);
     for ii=theind'
         ypart = Ystd(thetree.Allnodes{ii}.Xind,:);
         [~,res] = get_marginal(ypart,thetree.K,[],thetree.eps,...
@@ -101,7 +102,7 @@ function pdraws = get_surv_tree(thetree,Y,X,ndraw,graph,x0,ystar,alpha,the_title
                 subplot(s1,s2,cntr);
             end
         end
-        pdraws = get_surv(Y,res,ndraw,graph,ystar,alpha);
+        pdraws{ii} = get_surv(Y,res,ndraw,graph,ystar,alpha);
         if graph
             if isempty(the_title)
                 title(strcat(['Node Index: ',num2str(ii)]));
@@ -112,8 +113,5 @@ function pdraws = get_surv_tree(thetree,Y,X,ndraw,graph,x0,ystar,alpha,the_title
             ylim([-.05,1.05]);
         end
         cntr = cntr + 1;
-    end
-    if isempty(x0)
-        pdraws = [];
     end
 end
