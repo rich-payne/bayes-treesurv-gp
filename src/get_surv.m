@@ -35,7 +35,7 @@
 %        ystar will need to be re-scaled to plot on original units.
 %      pmean: the posterior mean of the survival function
 %      CI: the 1-alpha credible intervals
-function out = get_surv(Y_orig,res,ndraw,graph,ystar,alpha)
+function out = get_surv(Y_orig,res,ndraw,graph,ystar,alpha,extrapolate)
     Ymax = max(Y_orig(:,1));
     if isempty(ystar)
         nstar = 100;
@@ -48,13 +48,23 @@ function out = get_surv(Y_orig,res,ndraw,graph,ystar,alpha)
     end
     binind = zeros(nstar,1);
     K = length(res.s) - 1;
+    omit_ystar = [];
     for ii=1:nstar
         [themax,I] = max( ystar(ii) < res.s(2:(K+1)) );
-        if themax == 0 % ystar falls beyond the maximum s
+        if themax == 0 && extrapolate % ystar falls beyond the maximum s
             I = K; % put ystar value in the last bin for extrapolation...
+        elseif themax == 0 && ~extrapolate
+            omit_ystar = [omit_ystar, ii];
         end
         binind(ii) = I;
     end
+    if ~isempty(omit_ystar)
+        %ystar = ystar(omit_ystar ~= 1:length(ystar));
+        ystar(omit_ystar) = [];
+        nstar = length(ystar);
+        binind(omit_ystar) = [];
+    end
+    
     thesurv = zeros(nstar,1);
     samps = chol(res.Omegainv) \ normrnd(0,1,length(res.f),ndraw);
     samps = (samps + res.f)';
