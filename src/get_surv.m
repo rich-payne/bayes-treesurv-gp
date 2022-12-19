@@ -20,7 +20,7 @@
 %    Y_orig: A two-column matrix with the survival times in the first column
 %      (on original scale) and the survival indicator in
 %      the second column (0 if censored, 1 if observed).
-%    res: the output from get_marginal function
+%    res: the output from get_marginal function using scaled Y data.
 %    ndraw:  The number of Monte Carlo draws to estimate credible regions
 %    graph: If 1, a graph is produced. 0 suppresses graphing.
 %    ystar: A grid where the posterior survival function will be evaluated.
@@ -35,15 +35,16 @@
 %        ystar will need to be re-scaled to plot on original units.
 %      pmean: the posterior mean of the survival function
 %      CI: the 1-alpha credible intervals
-   
-
 function out = get_surv(Y_orig,res,ndraw,graph,ystar,alpha)
     Ymax = max(Y_orig(:,1));
     if isempty(ystar)
         nstar = 100;
-        ystar = linspace(.001,max(res.s)-1e-6,nstar); % Grid to evaluate the survival function
+         % Grid to evaluate the survival function
+         % Assumes res was created using scaled data for Y.
+        ystar = linspace(.001,max(res.s)-1e-6,nstar);
     else
         nstar = length(ystar);
+        ystar = ystar / Ymax; % rescale
     end
     binind = zeros(nstar,1);
     K = length(res.s) - 1;
@@ -78,7 +79,7 @@ function out = get_surv(Y_orig,res,ndraw,graph,ystar,alpha)
         SURV(ii,:) = thesurv;
     end
     out.surv = SURV;
-    out.ystar = ystar;
+    out.ystar = ystar * Ymax;
     
     pmean = mean(SURV);
     qtiles = quantile(SURV,[alpha/2,1-alpha/2],1);
@@ -86,10 +87,10 @@ function out = get_surv(Y_orig,res,ndraw,graph,ystar,alpha)
     out.pmean = pmean;
     out.CI = qtiles;
     if graph
-        plot(ystar*Ymax,pmean,':k',ystar*Ymax,qtiles(1,:),'--k',ystar*Ymax,qtiles(2,:),'--k')
+        plot(out.ystar,pmean,':k',out.ystar,qtiles(1,:),'--k',out.ystar,qtiles(2,:),'--k')
         graphpoints = 0;
         if graphpoints
-            survpoints = interp1(ystar*Ymax,pmean,Y_orig);
+            survpoints = interp1(out.ystar,pmean,Y_orig);
             hold on;
                 ind = Y_orig(:,2) == 1;
                 Ysub = Y_orig(ind,1);

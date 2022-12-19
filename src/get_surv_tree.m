@@ -43,7 +43,6 @@
 %      function for the data in the corresponding terminal node is
 %      returned.
 %    term_nod_ind: the terminal node index for each element of pdraws.
-
 function [pdraws, term_node_ind] = get_surv_tree(thetree,Y,X,ndraw,graph,x0,ystar,alpha,the_title)
     if ~exist('alpha','var')
         alpha = .05;
