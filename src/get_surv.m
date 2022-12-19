@@ -49,8 +49,8 @@ function out = get_surv(Y_orig,res,ndraw,graph,ystar,alpha)
     binind = zeros(nstar,1);
     K = length(res.s) - 1;
     for ii=1:nstar
-        [~,I] = max( ystar(ii) < res.s(2:(K+1)) );
-        if I == 0 % ystar falls beyond the maximum s
+        [themax,I] = max( ystar(ii) < res.s(2:(K+1)) );
+        if themax == 0 % ystar falls beyond the maximum s
             I = K; % put ystar value in the last bin for extrapolation...
         end
         binind(ii) = I;
