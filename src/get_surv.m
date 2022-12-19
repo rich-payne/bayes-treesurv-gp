@@ -58,12 +58,12 @@ function out = get_surv(Y_orig,res,ndraw,graph,ystar,alpha,extrapolate)
         end
         binind(ii) = I;
     end
-    if ~isempty(omit_ystar)
-        %ystar = ystar(omit_ystar ~= 1:length(ystar));
-        ystar(omit_ystar) = [];
-        nstar = length(ystar);
-        binind(omit_ystar) = [];
-    end
+%     if ~isempty(omit_ystar)
+%         %ystar = ystar(omit_ystar ~= 1:length(ystar));
+%         ystar(omit_ystar) = [];
+%         nstar = length(ystar);
+%         binind(omit_ystar) = [];
+%     end
     
     thesurv = zeros(nstar,1);
     samps = chol(res.Omegainv) \ normrnd(0,1,length(res.f),ndraw);
@@ -88,6 +88,13 @@ function out = get_surv(Y_orig,res,ndraw,graph,ystar,alpha,extrapolate)
         %end
         SURV(ii,:) = thesurv;
     end
+    % handle extrapolation
+    if ~isempty(omit_ystar)
+        SURV(:, omit_ystar) = NaN;
+        ystar(omit_ystar) = NaN;
+    end
+    
+    
     out.surv = SURV;
     out.ystar = ystar * Ymax;
     
